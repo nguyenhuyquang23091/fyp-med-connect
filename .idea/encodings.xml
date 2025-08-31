@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding">
+    <file url="file://$PROJECT_DIR$/api-gateway/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/api-gateway/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/appointment_service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/authservice/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/chat-box/profile-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/chat-box/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/chat-box/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/file_service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/notification_service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/profile-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/profile-service/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/profile_service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/rag-chat-bot/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/vnpay/src/main/java" charset="UTF-8" />
+  </component>
+</project>

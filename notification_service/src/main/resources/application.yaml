@@ -1,0 +1,31 @@
+server:
+  port: 8085
+  servlet:
+    context-path: /notification
+spring:
+  application:
+    name: notification-service
+  notification:
+    email:
+      brevo-apiKey: ${BREVO_API_KEY:}
+  data:
+    mongodb:
+      uri: mongodb://root:root@localhost:27018/notification-service?authSource=admin
+  kafka:
+    bootstrap-servers: localhost:9094
+    consumer:
+      group-id: notification-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.json.value.default.type: com.fyp.event.dto.NotificationEvent
+logging:
+  level:
+    com.fyp.notification_service: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

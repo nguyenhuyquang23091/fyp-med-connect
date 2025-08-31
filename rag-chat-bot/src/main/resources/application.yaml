@@ -1,0 +1,51 @@
+server:
+  port: 8089
+
+spring:
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+
+
+  datasource:
+      url: "jdbc:postgresql://localhost:5434/chatmemory"
+      username: postgres
+      password: helloimkwang2
+  jpa:
+      hibernate:
+        ddl-auto: update
+      show-sql: true
+  ai:
+    ollama:
+      base-url: http://localhost:11434
+      init:
+        pull-model-strategy: always
+        timeout: 5m
+        max-retries: 5
+      chat:
+        options:
+          model: hf.co/alpha-ai/LLAMA3-3B-Medical-COT-GGUF:Q4_K_M
+      embedding:
+        options:
+          model: hf.co/alpha-ai/LLAMA3-3B-Medical-COT-GGUF:Q4_K_M
+    chat:
+      memory:
+        repository:
+          jdbc:
+            initialize-schema: always
+
+logging:
+  level:
+    org:
+      springframework:
+        ai:
+          chat:
+            client:
+              advisor: DEBUG
+
+
+
+  ollama:

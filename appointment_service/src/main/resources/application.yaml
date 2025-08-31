@@ -1,0 +1,15 @@
+server:
+    port: 8084
+    servlet:
+        context-path : /appointment
+spring:
+    datasource:
+        url: "jdbc:postgresql://localhost:5434/appointment_database"
+        username: kwang
+        password: helloimkwang2
+    jpa:
+        hibernate:
+            ddl-auto: update
+        show-sql: true
+
+
