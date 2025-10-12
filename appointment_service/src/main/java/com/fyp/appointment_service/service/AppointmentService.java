@@ -27,14 +27,18 @@ import lombok.extern.slf4j.Slf4j;
 public class AppointmentService {
     AppointmentRepository appointmentRepository;
     AppointmentMapper appointmentMapper;
+    
+
+
+
     public AppointmentResponse createAppointment(AppointmentRequest request){
-       Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
        String userId = authentication.getName();
         AppointmentEntity appointmentEntity = AppointmentEntity.builder()
                 .userId(userId)
                 .note(request.getNote())
                 .reasons(request.getReasons())
-                .appointment_date(request.getAppointment_date())
+                .appointmentDate(request.getAppointment_date())
                 .doctorId(request.getDoctorId())
                 .createdDate(Instant.now())
                 .modifiedDate(Instant.now())
@@ -42,8 +46,9 @@ public class AppointmentService {
         return appointmentMapper.toAppointmentRespone(appointmentRepository.save(appointmentEntity));
     }
 
+
     public List<AppointmentResponse> getMyAppointment(){
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
         String userId = authentication.getName();
         return appointmentRepository
                 .findAllByUserId(userId)
@@ -51,14 +56,13 @@ public class AppointmentService {
                 .toList();
     }
 
-
     public void deleteMyAppointment(String id){
          appointmentRepository.deleteById(id);
     }
 
     @PreAuthorize("hasRole('DOCTOR')")
     public List<AppointmentResponse> getDoctorAppointment(){
-       Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
        String doctorIdJWT = authentication.getName();
                 return appointmentRepository
                         .findAllByDoctorId(doctorIdJWT)

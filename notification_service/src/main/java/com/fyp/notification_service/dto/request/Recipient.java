@@ -12,5 +12,4 @@ import lombok.experimental.FieldDefaults;
 public class Recipient {
     String name;
     String email;
-
 }

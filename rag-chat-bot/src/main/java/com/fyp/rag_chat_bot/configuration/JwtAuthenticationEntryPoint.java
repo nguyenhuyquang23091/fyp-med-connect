@@ -1,7 +1,8 @@
-package com.profile.profile_service.config;
+package com.fyp.rag_chat_bot.configuration;
 
 import java.io.IOException;
 
+import com.fyp.rag_chat_bot.dto.response.ApiResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -11,8 +12,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.profile.profile_service.dto.request.ApiResponse;
-import com.profile.profile_service.exceptions.ErrorCode;
+import com.fyp.rag_chat_bot.exceptions.ErrorCode;
 
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
     // this is for the entry point, it displays the error in the SecurityCOnfig,

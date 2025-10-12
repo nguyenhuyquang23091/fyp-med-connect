@@ -4,10 +4,12 @@ package com.fyp.authservice.controller;
 import com.fyp.authservice.dto.request.ApiResponse;
 import com.fyp.authservice.dto.request.PermissionRequest;
 import com.fyp.authservice.dto.request.RoleRequest;
+import com.fyp.authservice.dto.request.RoleUpdateRequest;
 import com.fyp.authservice.dto.response.PermissionResponse;
 import com.fyp.authservice.dto.response.RoleResponse;
 import com.fyp.authservice.service.PermissionService;
 import com.fyp.authservice.service.RoleService;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -36,6 +38,15 @@ public class RoleController {
                 .result(roleService.getAll()).
                 build();
     }
+    @PutMapping("/{roleName}")
+    public ApiResponse<RoleResponse> updateRole(
+            @PathVariable String roleName,
+            @Valid @RequestBody RoleUpdateRequest request) {
+        return ApiResponse.<RoleResponse>builder()
+                .result(roleService.update(roleName, request))
+                .build();
+    }
+
     @DeleteMapping("/{role}")
     ApiResponse<Void> delete(@PathVariable String role){
         roleService.delete(role);

@@ -2,6 +2,7 @@ package com.fyp.notification_service.exceptions;
 
 
 import com.fyp.notification_service.dto.request.ApiResponse;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -31,6 +32,7 @@ public class GlobalExceptionHandler {
 }
     @ExceptionHandler(value = AppException.class)
     ResponseEntity<ApiResponse> handleAppException(AppException  appException){
+        log.error("App exception occurred: ", appException);
         //Assigning a reference to enum instance, not instantiating new object
         ErrorCode errorCode = appException.getErrorCode();
         ApiResponse apiResponse = new ApiResponse();
@@ -69,4 +71,6 @@ public class GlobalExceptionHandler {
     apiResponse.setMessage(enumKey);
     return ResponseEntity.badRequest().body(apiResponse);
 }
+
+
 }

@@ -2,6 +2,10 @@ package com.profile.profile_service.controller;
 
 import java.util.List;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,26 +24,48 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
+@Validated
 public class UserProfileController {
     UserProfileService userProfileService;
     // admin api
-    @GetMapping("/users/{profileId}")
-    public UserProfileResponse getProfile(@PathVariable String profileId) {
-        return userProfileService.getOneUserProfile(profileId);
+    @GetMapping("/users/{userId}")
+    public ApiResponse<UserProfileResponse> getProfile(
+            @PathVariable @NotBlank(message = "UserId ID cannot be blank") String userId) {
+        return ApiResponse.<UserProfileResponse>builder()
+                .result(userProfileService.getOneUserProfile(userId))
+                .build();
     }
 
     @GetMapping("/users")
-    public List<UserProfile> getProfile() {
-        return userProfileService.getAllUserProfile();
+    public ApiResponse<List<UserProfile>> getProfile() {
+        return ApiResponse.<List<UserProfile>>builder()
+                .result(userProfileService.getAllUserProfile())
+                .build();
     }
 
     @DeleteMapping("/users/{profileId}")
-    public void delteUser(@PathVariable String profileId) {
+    public void deleteUser(@PathVariable @NotBlank(message = "Profile ID cannot be blank") String profileId) {
         userProfileService.deleteProfile(profileId);
+    }
+
+    @GetMapping("/users/get-all-doctors")
+    public ApiResponse<List<UserProfileResponse>> getAllDoctorProfile() {
+        return ApiResponse.<List<UserProfileResponse>>builder()
+                .result(userProfileService.getAllDoctorProfile())
+                .build();
+    }
+
+    // doctor api
+    @GetMapping("/users/get-all-patients")
+    public ApiResponse<List<UserProfileResponse>> getAllPatientProfile() {
+        return ApiResponse.<List<UserProfileResponse>>builder()
+                .result(userProfileService.getAllPatientProfile())
+                .build();
     }
     // user api
     @PutMapping("/users/my-profile")
-    public ApiResponse<UserProfileResponse> updateProfile(@RequestBody ProfileUpdateRequest profileUpdateRequest) {
+    public ApiResponse<UserProfileResponse> updateProfile(
+            @Valid @RequestBody ProfileUpdateRequest profileUpdateRequest) {
         return ApiResponse.<UserProfileResponse>builder()
                 .result(userProfileService.updateUserProfile(profileUpdateRequest))
                 .build();
@@ -52,12 +78,17 @@ public class UserProfileController {
                 .build();
     }
 
-
     @PutMapping("/users/avatar")
-    public ApiResponse<UserProfileResponse> updateAvatar(
-            @RequestParam("file") MultipartFile file) {
+    public ApiResponse<UserProfileResponse> updateAvatar(@RequestParam("file") MultipartFile file) {
         return ApiResponse.<UserProfileResponse>builder()
                 .result(userProfileService.updateUserAvatar(file))
+                .build();
+    }
+
+    @DeleteMapping("/users/avatar")
+    public ApiResponse<UserProfileResponse> deleteAvatar() {
+        return ApiResponse.<UserProfileResponse>builder()
+                .result(userProfileService.deleteUserAvatar())
                 .build();
     }
 }

@@ -2,7 +2,10 @@ package com.fyp.authservice.service;
 
 
 import com.fyp.authservice.dto.request.RoleRequest;
+import com.fyp.authservice.dto.request.RoleUpdateRequest;
 import com.fyp.authservice.dto.response.RoleResponse;
+import com.fyp.authservice.exceptions.AppException;
+import com.fyp.authservice.exceptions.ErrorCode;
 import com.fyp.authservice.mapper.RoleMapper;
 import com.fyp.authservice.repository.PermissionRepository;
 import com.fyp.authservice.repository.RoleRepository;
@@ -36,6 +39,20 @@ public class RoleService  {
 
       return  roleMapper.toRoleResponse(role);
     }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    public RoleResponse update(String roleName, RoleUpdateRequest roleUpdateRequest){
+
+        var role = roleRepository.findByName(roleName).orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
+        var permissions = permissionRepository.findAllById(roleUpdateRequest.getPermissions());
+        role.setPermissions(new HashSet<>(permissions));
+        roleMapper.roleUpdateMapper(role, roleUpdateRequest );
+
+        role = roleRepository.save(role);
+
+        return roleMapper.toRoleResponse(role);
+    }
+
     @PreAuthorize("hasRole('ADMIN')")
     public List<RoleResponse> getAll(){
         var roles = roleRepository.findAll();

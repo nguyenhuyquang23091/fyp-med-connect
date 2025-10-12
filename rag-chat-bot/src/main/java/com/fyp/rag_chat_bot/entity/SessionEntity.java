@@ -18,16 +18,12 @@ public class SessionEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
     
-    @Column(unique = true, nullable = false)
     String sessionId;
     
-    @Column(nullable = false)
     String userId;
     
-    @Column(unique = true, nullable = false)
     String conversationId;
     
-    @Column(nullable = false)
     Instant createdAt;
     
     Instant lastUpdatedAt;

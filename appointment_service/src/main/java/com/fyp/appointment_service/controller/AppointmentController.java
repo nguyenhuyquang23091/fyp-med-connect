@@ -5,6 +5,7 @@ import com.fyp.appointment_service.dto.request.ApiResponse;
 import com.fyp.appointment_service.dto.request.AppointmentRequest;
 import com.fyp.appointment_service.dto.response.AppointmentResponse;
 import com.fyp.appointment_service.service.AppointmentService;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +27,7 @@ public class AppointmentController {
 
     AppointmentService appointmentService;
     @PostMapping("/create")
-    public ApiResponse<AppointmentResponse> createAppointment(@RequestBody AppointmentRequest request){
+    public ApiResponse<AppointmentResponse> createAppointment(@Valid @RequestBody AppointmentRequest request){
         return ApiResponse.<AppointmentResponse>builder()
                 .result( appointmentService.createAppointment(request))
                 .build();

@@ -18,7 +18,8 @@ public enum ErrorCode {
     INVALID_KEY(1004, "Invalid message", HttpStatus.BAD_REQUEST),
     USER_NOT_EXISTED(1005, "User is not existed", HttpStatus.NOT_FOUND),
     UNAUTHENTICATED(1006, "Unauthenticated", HttpStatus.UNAUTHORIZED),
-    UNAUTHORIZED(1007, "You do not have permission", HttpStatus.FORBIDDEN )
+    UNAUTHORIZED(1007, "You do not have permission", HttpStatus.FORBIDDEN ),
+    NO_FILE_FOUND(1008, "No file was found", HttpStatus.NOT_FOUND)
     ;
     private int code;
     private HttpStatusCode statusCode;

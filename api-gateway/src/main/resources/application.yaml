@@ -7,6 +7,10 @@ app:
 spring:
   application:
     name: api-gateway
+  data:
+    redis:
+      host: localhost
+      port: 6379
   cloud:
     gateway:
       routes:
@@ -16,28 +20,96 @@ spring:
             - Path=${app.api-prefix}/identity/**
           filters:
             - StripPrefix=2
-        - id: profile-service
+            # Stricter limit for auth to prevent brute-force attacks
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 5
+                redis-rate-limiter.burstCapacity: 10
+                redis-rate-limiter.requestedTokens: 1
+
+        - id: profile-service-users
           uri: http://localhost:8081
           predicates:
             - Path=${app.api-prefix}/profile/users/**
           filters:
             - StripPrefix=2
+            - AddRequestHeader=X-Calling-Service,profile-service
+            # Standard limit for general profile browsing
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                redis-rate-limiter.requestedTokens: 1
+        - id: profile-service-prescription
+          uri: http://localhost:8081
+          predicates:
+            - Path=${app.api-prefix}/profile/prescription/**
+          filters:
+            - StripPrefix=2
+            - AddRequestHeader=X-Calling-Service,profile-service
+            # Standard limit for fetching prescriptions
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                redis-rate-limiter.requestedTokens: 1
         - id: chatbot
           uri: http://localhost:8082
           predicates:
             - Path=${app.api-prefix}/chatbot/**
           filters:
             - StripPrefix=2
+            # Stricter limit as AI chatbot requests can be resource-intensive
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 5
+                redis-rate-limiter.burstCapacity: 10
+                redis-rate-limiter.requestedTokens: 1
         - id: appointment
           uri: http://localhost:8084
           predicates:
             - Path=${app.api-prefix}/appointment/**
           filters:
             - StripPrefix=2
+            # Standard limit for appointment management
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                redis-rate-limiter.requestedTokens: 1
         - id: notification
           uri: http://localhost:8085
           predicates:
-            - Path=${app.api-prefix}/notification/**
+            - Path=${app.api-prefix}/notifications/**
           filters:
             - StripPrefix=2
-
+            # Limit for fetching notifications
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 15
+                redis-rate-limiter.requestedTokens: 1
+        - id: notification-websocket
+          uri: ws://localhost:8085
+          predicates:
+            - Path=/notification/ws/**
+          filters:
+            - StripPrefix=1
+            # Strict limit on new WebSocket connection attempts to prevent flooding
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 2
+                redis-rate-limiter.burstCapacity: 5
+                redis-rate-limiter.requestedTokens: 1
+        - id: file-management
+          uri: http://localhost:8086
+          predicates:
+            - Path=${app.api-prefix}/file/**
+          filters:
+            - StripPrefix=2
+            # Stricter limit for file uploads/downloads which can be heavy operations
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 5
+                redis-rate-limiter.burstCapacity: 10
+                redis-rate-limiter.requestedTokens: 1

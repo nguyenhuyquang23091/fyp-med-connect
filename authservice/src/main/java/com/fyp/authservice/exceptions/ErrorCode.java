@@ -18,7 +18,9 @@ public enum ErrorCode {
     INVALID_KEY(1004, "Invalid message", HttpStatus.BAD_REQUEST),
     USER_NOT_EXISTED(1005, "User is not existed", HttpStatus.NOT_FOUND),
     UNAUTHENTICATED(1006, "Unauthenticated", HttpStatus.UNAUTHORIZED),
-    UNAUTHORIZED(1007, "You do not have permission", HttpStatus.FORBIDDEN )
+    UNAUTHORIZED(1007, "You do not have permission", HttpStatus.FORBIDDEN ),
+    ROLE_NOT_FOUND(1008, "Role is not exist", HttpStatus.NOT_FOUND),
+    TOKEN_GENERATION_FAILED(1009, "Failed to generate token", HttpStatus.INTERNAL_SERVER_ERROR)
     ;
     private int code;
     private HttpStatusCode statusCode;

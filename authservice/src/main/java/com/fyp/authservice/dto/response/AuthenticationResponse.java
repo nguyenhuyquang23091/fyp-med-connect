@@ -10,7 +10,10 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class AuthenticationResponse {
-     String token;
-     boolean isAuthenticated; //true/false -> ben kia tra ve ket qua cua thang nay thoi
-
+     String accessToken;
+     String refreshToken;
+     boolean isAuthenticated;
+     long accessTokenExpires;
+     //true/false -> ben kia tra ve ket qua cua thang nay thoi
+     String role;
 }

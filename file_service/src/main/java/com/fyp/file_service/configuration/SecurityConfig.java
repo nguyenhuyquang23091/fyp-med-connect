@@ -16,14 +16,13 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableMethodSecurity
 public class SecurityConfig {
     public String[] PUBLIC_ENDPOINT = {
-            "/media/upload"
     };
 
     private final CustomJwtDecoder customJwtDecoder;
 
-   public SecurityConfig(CustomJwtDecoder customJwtDecoder){
-       this.customJwtDecoder = customJwtDecoder;
-   }
+    public SecurityConfig(CustomJwtDecoder customJwtDecoder){
+        this.customJwtDecoder = customJwtDecoder;
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {

@@ -1,4 +1,4 @@
-package com.profile.profile_service.config;
+package com.fyp.rag_chat_bot.configuration;
 
 import java.text.ParseException;
 

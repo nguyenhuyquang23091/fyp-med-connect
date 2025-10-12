@@ -4,9 +4,9 @@ server:
         context-path : /appointment
 spring:
     datasource:
-        url: "jdbc:postgresql://localhost:5434/appointment_database"
-        username: kwang
-        password: helloimkwang2
+        url: ${POSTGRES_URL:}
+        username: ${POSTGRES_USERNAME:}
+        password: ${POSTGRES_PASSWORD:}
     jpa:
         hibernate:
             ddl-auto: update

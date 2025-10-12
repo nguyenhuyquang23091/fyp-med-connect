@@ -1,8 +1,10 @@
-package com.fyp.rag_chat_bot.dto;
+package com.fyp.rag_chat_bot.dto.response;
 
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+
+import java.time.LocalDate;
 
 @Data
 @Builder
@@ -10,5 +12,9 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserProfileResponse {
-
+    String id;
+    String userId;
+    String firstName;
+    String lastName;
+    String city;
 }

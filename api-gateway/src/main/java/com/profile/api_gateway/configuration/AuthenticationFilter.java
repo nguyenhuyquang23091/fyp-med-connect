@@ -23,7 +23,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -38,7 +38,8 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
     private String[] publicEndPoints  = {
             "/identity/auth/.*",
             "/identity/users/registration",
-            "/chatbot/chat",
+            "/identity/auth/refresh",
+            "/chatbot/ai/generate",
             "/notification/email/send"
     };
 
@@ -57,7 +58,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
         if(CollectionUtils.isEmpty(authHeader)) {
             return unauthenticated(exchange.getResponse());
         }
-        String token = authHeader.get(0).replace("Bearer", "");
+        String token = authHeader.get(0).replace("Bearer ", "");
         log.info("token {}", token);
 
         //verify token
@@ -65,14 +66,18 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
         //on error resume is a fallback exception in error handler
         return identityService.introspect(token).flatMap(
                 introspectResponseApiResponse -> {
+                    log.info("Introspect response {}", introspectResponseApiResponse.getResult().isValid());
                     if(introspectResponseApiResponse.getResult().isValid())
                         return chain.filter(exchange);
                     else
                         return unauthenticated(exchange.getResponse());
                 }
-        ).onErrorResume(throwable -> unauthenticated(exchange.getResponse()));
+        ).onErrorResume(throwable -> {
+            log.error("Introspect error: {}", throwable.getMessage());
+            return unauthenticated(exchange.getResponse());
+        });
     }
-    //every request is on the prioritized order
+    // Changed from -1 to 1 to allow rate limiter (order 0) to run first
     @Override
     public int getOrder() {
         return -1;
@@ -91,11 +96,13 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
                 .build();
         response.setStatusCode(HttpStatus.UNAUTHORIZED);
 
-        String body = null;
+        String body;
         try {
             body = objectMapper.writeValueAsString(apiResponse);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            log.error("Failed to serialize error response", e);
+            // Fallback to simple JSON string
+            body = "{\"code\":1401,\"message\":\"Unauthenticated\"}";
         }
 
         response.getHeaders().add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);

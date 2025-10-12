@@ -32,6 +32,7 @@ public class UserController {
                 .result(userService.createUser(request))
                 .build();
     }
+
     @GetMapping
     ApiResponse<List<User>> getUsers(){
        var authentication =  SecurityContextHolder.getContext().getAuthentication();
@@ -56,17 +57,26 @@ public class UserController {
    }
 
     @PutMapping("/my-info")
-    UserResponse updateUser(@RequestBody UserUpdateRequest updateRequest){
+    UserResponse updateUser(@Valid @RequestBody UserUpdateRequest updateRequest){
        return userService.updateUser( updateRequest);
     }
     @PutMapping("/{userId}")
-    UserResponse adminUpdateUser( @PathVariable String userId, @RequestBody AdminUpdateRequest updateRequest){
+    UserResponse adminUpdateUser( @PathVariable String userId, @Valid @RequestBody AdminUpdateRequest updateRequest){
         return userService.adminUpdateUser(userId, updateRequest);
     }
 
     @DeleteMapping("/{userId}")
     void deleteUser(@PathVariable String userId){
         userService.deleteUser(userId);
+    }
+
+
+    @GetMapping("/internal/by-role/{role}")
+    ApiResponse<List<String>> getUserIdsByRole(@PathVariable String role) {
+        log.info("Internal call: fetching user IDs for role: {}", role);
+        return ApiResponse.<List<String>>builder()
+                .result(userService.findUserIdByRoles(role))
+                .build();
     }
 
 }

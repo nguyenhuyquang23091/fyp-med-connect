@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 
@@ -14,7 +15,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level =  AccessLevel.PRIVATE)
-@Table(name = "users")
+@Table(name = "appointments")
 public class AppointmentEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -23,7 +24,11 @@ public class AppointmentEntity {
     String reasons;
     String note;
     String doctorId;
-    LocalDate appointment_date;
+    LocalDate appointmentDate;
     Instant createdDate;
     Instant modifiedDate;
+    BigDecimal prices;
+    String status;
+
+
 }

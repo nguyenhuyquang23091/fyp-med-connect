@@ -11,6 +11,12 @@ import org.springframework.data.neo4j.core.support.UUIDStringGenerator;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+/**
+ * UserProfile entity representing user profile information in Neo4j.
+ *
+ * Note: Role information is NOT stored here to maintain single source of truth.
+ * Roles are managed by AuthService and propagated via JWT tokens.
+ */
 @Getter
 @Setter
 @Builder
@@ -23,12 +29,14 @@ public class UserProfile {
     @GeneratedValue(generatorClass = UUIDStringGenerator.class)
     String id;
 
-    // userId from authservice
+    // userId from authservice (single source of truth for user identity)
     @Property("userId")
     String userId;
 
-    String avatar;
+    @Property("email")
+    String email;
 
+    String avatar;
     String firstName;
     String lastName;
     LocalDate dob;

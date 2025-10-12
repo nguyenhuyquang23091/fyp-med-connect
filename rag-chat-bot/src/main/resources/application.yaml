@@ -1,36 +1,36 @@
 server:
-  port: 8089
+  port: 8082
+  servlet:
+    context-path: /chatbot
 
 spring:
-
-  data:
-    redis:
-      host: localhost
-      port: 6379
-
-
-
   datasource:
-      url: "jdbc:postgresql://localhost:5434/chatmemory"
-      username: postgres
-      password: helloimkwang2
+      url: ${POSTGRES_URL:}
+      username: ${POSTGRES_USERNAME:}
+      password: ${POSTGRES_PASSWORD:}
   jpa:
       hibernate:
         ddl-auto: update
       show-sql: true
   ai:
     ollama:
-      base-url: http://localhost:11434
+      base-url: ${BASE_URL:}
       init:
         pull-model-strategy: always
         timeout: 5m
         max-retries: 5
       chat:
         options:
-          model: hf.co/alpha-ai/LLAMA3-3B-Medical-COT-GGUF:Q4_K_M
+          model: ${MODEL:}
       embedding:
         options:
-          model: hf.co/alpha-ai/LLAMA3-3B-Medical-COT-GGUF:Q4_K_M
+          model: ${MODEL:}
+    vectorstore:
+      qdrant:
+        host: localhost
+        port: 6334
+        collection-name: ${COLLECTION_NAME:}
+        use-tls: false
     chat:
       memory:
         repository:
@@ -41,11 +41,12 @@ logging:
   level:
     org:
       springframework:
-        ai:
-          chat:
-            client:
-              advisor: DEBUG
-
-
-
+        ai: DEBUG
+        ai.chat.client.advisor: DEBUG
+        ai.vectorstore: DEBUG
+        ai.vectorstore.qdrant: DEBUG
+        ai.ollama: DEBUG
+    io:
+      qdrant: DEBUG
+    com.fyp.rag_chat_bot: DEBUG
   ollama:

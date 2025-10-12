@@ -15,7 +15,11 @@ public enum ErrorCode {
     INVALID_KEY(1004, "Invalid message", HttpStatus.BAD_REQUEST),
     USER_NOT_EXISTED(1005, "User is not existed", HttpStatus.NOT_FOUND),
     UNAUTHENTICATED(1006, "Unauthenticated", HttpStatus.UNAUTHORIZED),
-    UNAUTHORIZED(1007, "You do not have permission", HttpStatus.FORBIDDEN);
+    UNAUTHORIZED(1007, "You do not have permission", HttpStatus.FORBIDDEN),
+    REQUEST_NOTFOUND(1008, "Request is not existed ", HttpStatus.BAD_REQUEST),
+    REQUEST_ALREADY_PROCESSED(1009, "Request is already processed ", HttpStatus.BAD_REQUEST),
+    PRESCRIPTION_NOT_FOUND(1010, "Prescription is not existed", HttpStatus.BAD_REQUEST),
+    AVATAR_NOT_FOUND(1011, "Avatar not found", HttpStatus.NOT_FOUND);
     private int code;
     private HttpStatusCode statusCode;
     private String message;

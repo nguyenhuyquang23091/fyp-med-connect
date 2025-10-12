@@ -2,6 +2,7 @@ package com.fyp.authservice.exceptions;
 
 
 import com.fyp.authservice.dto.request.ApiResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -15,10 +16,12 @@ import org.springframework.security.access.AccessDeniedException;
 //This class is used for all exception in 1 places
 
 @ControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
 @ExceptionHandler(value = Exception.class)
-    ResponseEntity<ApiResponse> handleRuntimeException(RuntimeException  runtimeException){
+    ResponseEntity<ApiResponse> handleRuntimeException(Exception  exception){
+    log.error(exception.getMessage(), exception);
     ApiResponse apiResponse = new ApiResponse();
     apiResponse.setCode(ErrorCode.UNIDENTIFIED_EXCEPTION.getCode());
     apiResponse.setMessage(ErrorCode.UNIDENTIFIED_EXCEPTION.getMessage());
@@ -26,6 +29,7 @@ public class GlobalExceptionHandler {
 }
     @ExceptionHandler(value = AppException.class)
     ResponseEntity<ApiResponse> handleAppException(AppException  appException){
+        log.error(appException.getMessage(), appException);
         //Assigning a reference to enum instance, not instantiating new object
         ErrorCode errorCode = appException.getErrorCode();
         ApiResponse apiResponse = new ApiResponse();
@@ -51,14 +55,13 @@ public class GlobalExceptionHandler {
     //try to catch the error in the ErrorCode class
     try{
       ErrorCode specificErrorCode = ErrorCode.valueOf(enumKey);
-
       errorCode = specificErrorCode;
       enumKey = errorCode.getMessage();
-
     }
     //If it don't,
     // it will throw the default message from the @Email or @Size annotation from request class,
     // example is UserCreationRq
+    //
     catch (IllegalArgumentException e){
     }
     ApiResponse apiResponse = new ApiResponse();

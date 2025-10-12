@@ -1,16 +1,22 @@
 server:
   port: 8085
   servlet:
-    context-path: /notification
+    context-path: /notifications
+
+socket:
+  host: localhost
+  port: 9092
 spring:
   application:
     name: notification-service
   notification:
     email:
-      brevo-apiKey: ${BREVO_API_KEY:}
+      brevo-apiKey : ${BREVO_API_KEY:}
   data:
     mongodb:
-      uri: mongodb://root:root@localhost:27018/notification-service?authSource=admin
+      uri: mongodb://localhost:27017/notification
+
+
   kafka:
     bootstrap-servers: localhost:9094
     consumer:

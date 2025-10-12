@@ -1,20 +1,25 @@
 package com.fyp.notification_service.dto.request;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import lombok.experimental.FieldDefaults;
+import lombok.experimental.SuperBuilder;
 
 @Data
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
-public class Notification {
-    String recipientUserId;           // Patient/Doctor user ID
-    String notificationType;          // "ACCESS_REQUEST", "ACCESS_APPROVED", "ACCESS_DENIED"
-    String message;                   // Notification message
-    
-    // Prescription-specific data
-    String requestId;                 // Access request ID
+public abstract class NotificationRequest {
+    //gui cho
+    @NotNull(message = "RECIPIENT_ID_NULL")
+    @NotBlank(message = "RECIPIENT_ID_EMPTY")
+    protected String recipientId;
 
-    String prescriptionId;            // Related prescription
+    @NotNull(message = "NOTIFICATION_TYPE_NULL")
+    protected String notificationType;
+
+    protected String title;
+
+    protected String message;
+
 }

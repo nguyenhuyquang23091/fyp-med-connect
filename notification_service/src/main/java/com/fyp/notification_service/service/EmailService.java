@@ -31,11 +31,10 @@ public class EmailService {
     protected String apiKey;
 
     public EmailResponse sendMail(SendEmailRequest sendEmailRequest){
-
         EmailRequest emailRequest = EmailRequest
                 .builder()
                 .sender
-                        (Sender.builder().name("Huy Quang Nguyen")
+                        (Sender.builder().name("Med Connect - Your Healthcare Service")
                                 .email("nguyenhuyquang230904@gmail.com").build())
                 .to(List.of(sendEmailRequest.getTo()))
                 .subject(sendEmailRequest.getSubject())

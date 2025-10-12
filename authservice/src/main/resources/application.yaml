@@ -4,9 +4,9 @@ server:
     context-path : /identity
 spring:
   datasource:
-    url: "jdbc:postgresql://localhost:5433/identity_service"
-    username: postgres
-    password: helloimkwang2
+    url: ${POSTGRES_URL:}
+    username: ${POSTGRES_USERNAME:}
+    password: ${POSTGRES_PASSWORD:}
   jpa:
     hibernate:
       ddl-auto: update
@@ -17,10 +17,9 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
   jwt:
-    singerKey: ${JWT_SIGNER_KEY:}
-    expired-duration: 3600 #second
+    singerKey : ${JWT_SIGNER_KEY:}
+    expired-duration: 4000 #second
     refreshable-duration: 36000 # in second
-
   app:
     services:
       profile: "http://localhost:8081/profile"

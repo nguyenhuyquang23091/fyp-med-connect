@@ -1,4 +1,4 @@
-package com.profile.profile_service.exceptions;
+package com.fyp.rag_chat_bot.exceptions;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;

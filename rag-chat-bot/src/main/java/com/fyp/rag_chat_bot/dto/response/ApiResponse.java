@@ -1,4 +1,4 @@
-package com.fyp.appointment_service.dto.request;
+package com.fyp.rag_chat_bot.dto.response;
 
 
 import com.fasterxml.jackson.annotation.JsonInclude;

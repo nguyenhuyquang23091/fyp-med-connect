@@ -1,5 +1,4 @@
 server:
-
   port: 8086
   servlet:
     context-path: /file
@@ -8,8 +7,9 @@ spring:
     name: file-service
   data:
     mongodb:
-      uri: mongodb://root:root@localhost:27017/file-service?authSource=admin
-cloudinary :
-  cloudinary.cloud-name: ${CLOUDINARY_CLOUD_NAME:}
-  cloudinary.api-key: ${CLOUDINARY_API_KEY:}
-  cloudinary.api-secret: ${CLOUDINARY_API_SECRET:}
+      uri: mongodb://localhost:27017/file-service
+cloudinary:
+  cloudinary:
+    cloud-name: ${CLOUD_NAME:}
+    api-key: ${CLOUD_API_KEY:}
+    api-secret: ${CLOUD_API_SECRET:}

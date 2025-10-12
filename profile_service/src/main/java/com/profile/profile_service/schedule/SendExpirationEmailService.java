@@ -1,0 +1,154 @@
+package com.profile.profile_service.schedule;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+
+import com.profile.profile_service.NotificationEvent;
+import com.profile.profile_service.constant.AccessStatus;
+import com.profile.profile_service.entity.PrescriptionAccess;
+import com.profile.profile_service.entity.UserProfile;
+import com.profile.profile_service.repository.PrescriptionAccessRepository;
+import com.profile.profile_service.repository.UserProfileRepository;
+
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
+
+@Service
+@Slf4j
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+public class SendExpirationEmailService {
+    PrescriptionAccessRepository accessRepository;
+    UserProfileRepository userProfileRepository;
+    static final long _45_MINUTES_IN_SECONDS = 2700L;
+    static final long _15_MINUTES_IN_MILLISECONDS = 900_000L;
+    KafkaTemplate<String, Object> kafkaTemplate;
+
+    @Scheduled(fixedDelay = _15_MINUTES_IN_MILLISECONDS) // 15 minutes
+    public void sendExpirationEmailToDoctor() {
+        try {
+            log.info("Starting scheduled task: sendExpirationEmailToDoctor");
+
+            Instant now = Instant.now();
+            Instant _45MinutesAgo = now.minusSeconds(_45_MINUTES_IN_SECONDS);
+
+            List<PrescriptionAccess> inactiveRequests =
+                    accessRepository.findAllByAccessStatusAndRequestedAtBefore(AccessStatus.PENDING, _45MinutesAgo);
+
+            if (inactiveRequests.isEmpty()) {
+                log.info("No pending prescription access requests found that are older than 45 minutes");
+                return;
+            }
+
+            log.info("Found {} pending prescription access requests to process", inactiveRequests.size());
+
+            // Extract unique doctor IDs to batch fetch profiles (eliminates N+1 query problem)
+            List<String> doctorUserIds = inactiveRequests.stream()
+                    .map(PrescriptionAccess::getDoctorUserId)
+                    .distinct()
+                    .toList();
+
+            // Extract unique patient IDs to batch fetch profiles
+            List<String> patientUserIds = inactiveRequests.stream()
+                    .map(PrescriptionAccess::getPatientUserId)
+                    .distinct()
+                    .toList();
+
+            // Batch fetch all doctor and patient profiles in parallel
+            List<UserProfile> doctorProfiles = userProfileRepository.findAllByUserIdIn(doctorUserIds);
+            List<UserProfile> patientProfiles = userProfileRepository.findAllByUserIdIn(patientUserIds);
+
+            // Create Maps for O(1) lookup of profiles
+            Map<String, UserProfile> doctorProfileMap =
+                    doctorProfiles.stream().collect(Collectors.toMap(UserProfile::getUserId, profile -> profile));
+            Map<String, UserProfile> patientProfileMap =
+                    patientProfiles.stream().collect(Collectors.toMap(UserProfile::getUserId, profile -> profile));
+
+            int sentCount = 0;
+            int skippedCount = 0;
+
+            for (PrescriptionAccess prescriptionAccess : inactiveRequests) {
+                try {
+                    UserProfile doctorProfile = doctorProfileMap.get(prescriptionAccess.getDoctorUserId());
+
+                    // Validate doctor profile exists and has email
+                    if (doctorProfile == null) {
+                        log.warn("Doctor profile not found for userId: {}", prescriptionAccess.getDoctorUserId());
+                        skippedCount++;
+                        continue;
+                    }
+
+                    String doctorEmail = doctorProfile.getEmail();
+                    if (doctorEmail == null || doctorEmail.isBlank()) {
+                        log.warn("Doctor {} has no email address", doctorProfile.getUserId());
+                        skippedCount++;
+                        continue;
+                    }
+
+                    // Get patient profile for full name
+                    UserProfile patientProfile = patientProfileMap.get(prescriptionAccess.getPatientUserId());
+                    if (patientProfile == null) {
+                        log.warn("Patient profile not found for userId: {}", prescriptionAccess.getPatientUserId());
+                        skippedCount++;
+                        continue;
+                    }
+
+                    // Build notification event
+                    String doctorFullName = doctorProfile.getFirstName() + " " + doctorProfile.getLastName();
+                    String patientFullName = patientProfile.getFirstName() + " " + patientProfile.getLastName();
+                    String prescriptionName = prescriptionAccess.getPrescriptionName();
+
+                    NotificationEvent notificationEvent = NotificationEvent.builder()
+                            .channel("EXPIRE")
+                            .recipient(doctorEmail)
+                            .subject("Nearly Expired Request")
+                            .body("Hello Dr. " + doctorFullName
+                                    + ", your prescription access request to \"" + prescriptionName
+                                    + "\" belonging to " + patientFullName
+                                    + " is nearly expired. Please contact your patient.")
+                            .build();
+
+                    // Send to Kafka with async callback for error handling
+                    CompletableFuture<SendResult<String, Object>> future =
+                            kafkaTemplate.send("notification-delivery", notificationEvent);
+
+                    future.whenComplete((result, ex) -> {
+                        if (ex != null) {
+                            log.error(
+                                    "Failed to send expiration notification to doctor {} via Kafka: {}",
+                                    doctorProfile.getUserId(),
+                                    ex.getMessage(),
+                                    ex);
+                        } else {
+                            log.debug(
+                                    "Successfully sent expiration notification to doctor {} at {}",
+                                    doctorProfile.getUserId(),
+                                    doctorEmail);
+                        }
+                    });
+                    sentCount++;
+                } catch (Exception e) {
+                    log.error(
+                            "Unexpected error processing prescription access for doctor {}: {}",
+                            prescriptionAccess.getDoctorUserId(),
+                            e.getMessage(),
+                            e);
+                    skippedCount++;
+                }
+            }
+            log.info("Completed sendExpirationEmailToDoctor task. Sent: {}, Skipped: {}", sentCount, skippedCount);
+        } catch (Exception e) {
+            log.error("Critical error in sendExpirationEmailToDoctor scheduled task: {}", e.getMessage(), e);
+        }
+    }
+}

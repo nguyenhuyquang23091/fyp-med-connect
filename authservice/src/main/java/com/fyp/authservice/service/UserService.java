@@ -45,7 +45,7 @@ public class UserService {
       ProfileMapper profileMapper;
       KafkaTemplate<String, Object> kafkaTemplate;
 
-    public UserResponse createUser(UserCreationRequest request){
+    public UserResponse createUser(UserCreationRequest request)  {
         if (userRepository.existsByEmail(request.getEmail()))
             throw new AppException(ErrorCode.USER_EXISTED);
         User user  = userMapper.toUser(request);
@@ -57,8 +57,9 @@ public class UserService {
 
         var userProfileRequest = profileMapper.toProfileCreationRequest(request);
         userProfileRequest.setUserId(user.getId());
+        userProfileRequest.setEmail(user.getEmail());
 
-        profileClient.createProfile(userProfileRequest);
+
         NotificationEvent notificationEvent = NotificationEvent.builder()
                 .channel("EMAIL")
                 .recipient(request.getEmail())
@@ -75,11 +76,12 @@ public class UserService {
         log.info("In method get users: ");
         return userRepository.findAll();
     }
+
     @PreAuthorize("hasRole('ADMIN')")
     public UserResponse getOneUser(String id){
         log.info("In method get one user ");
         return userMapper.toUserResponse( userRepository.findById(id).
-                orElseThrow(() -> new RuntimeException("User not found")));
+                orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED)));
     }
 
     public UserResponse getMyInfo(){
@@ -115,6 +117,10 @@ public class UserService {
         userMapper.updateUser(user, updateRequest);
         user.setPassword(passwordEncoder.encode(updateRequest.getPassword()));
         return userMapper.toUserResponse(userRepository.save(user));
+    }
+
+    public List<String> findUserIdByRoles (String role){
+        return userRepository.findUserIdByRole(role).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
     }
 
     @PreAuthorize("hasRole('ADMIN')")

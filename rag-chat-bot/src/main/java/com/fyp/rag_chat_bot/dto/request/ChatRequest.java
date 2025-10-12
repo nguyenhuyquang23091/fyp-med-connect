@@ -1,7 +1,7 @@
-package com.fyp.rag_chat_bot.dto;
+package com.fyp.rag_chat_bot.dto.request;
 
-
-import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -11,6 +11,10 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ChatRequest {
+    @Size(max = 100, message = "Conversation ID must not exceed 100 characters")
     String conversationId;
+
+    @NotBlank(message = "Message is required")
+    @Size(min = 1, max = 2000, message = "Message must be between 1 and 2000 characters")
     String message;
 }

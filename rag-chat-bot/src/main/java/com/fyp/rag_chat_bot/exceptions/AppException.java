@@ -1,5 +1,6 @@
-package com.profile.profile_service.exceptions;
+package com.fyp.rag_chat_bot.exceptions;
 
+import com.fyp.rag_chat_bot.exceptions.ErrorCode;
 import lombok.Getter;
 import lombok.Setter;
 

@@ -38,7 +38,7 @@
 ### 📅 **Appointment Management System**
 - **Full appointment lifecycle** management (create, update, cancel)
 - **Doctor availability scheduling** with conflict resolution
-- **Automated notification system** for appointment reminders
+- **Automated notificationRequest system** for appointment reminders
 - **Integration with profile service** for user verification
 
 ### 📁 **Advanced File Management**
@@ -57,7 +57,7 @@
 - **Apache Kafka** for asynchronous message processing
 - **Multi-channel notifications** (email, in-app, SMS ready)
 - **Event-driven architecture** for appointment updates and alerts
-- **MongoDB storage** for notification history and preferences
+- **MongoDB storage** for notificationRequest history and preferences
 
 ### 💳 **Payment Processing Integration**
 - **VNPay gateway integration** for Vietnamese market

@@ -1,4 +1,4 @@
-package com.fyp.rag_chat_bot.dto;
+package com.fyp.rag_chat_bot.dto.response;
 
 
 import com.fasterxml.jackson.annotation.JsonProperty;

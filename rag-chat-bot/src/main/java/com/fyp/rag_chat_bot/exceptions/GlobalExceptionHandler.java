@@ -1,21 +1,25 @@
-package com.profile.profile_service.exceptions;
+package com.fyp.rag_chat_bot.exceptions;
 
+import com.fyp.rag_chat_bot.dto.response.ApiResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
-import com.profile.profile_service.dto.request.ApiResponse;
+
 
 // Same as the class name
 // This class is used for all exception in 1 places
 
 @ControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(value = Exception.class)
-    ResponseEntity<ApiResponse> handleRuntimeException(RuntimeException runtimeException) {
+    ResponseEntity<ApiResponse> handleRuntimeException(Exception exception) {
+        log.error(exception.getMessage(), exception);
         ApiResponse apiResponse = new ApiResponse();
         apiResponse.setCode(ErrorCode.UNIDENTIFIED_EXCEPTION.getCode());
         apiResponse.setMessage(ErrorCode.UNIDENTIFIED_EXCEPTION.getMessage());
@@ -24,6 +28,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(value = AppException.class)
     ResponseEntity<ApiResponse> handleAppException(AppException appException) {
+        log.error(appException.getMessage(), appException);
         // Assigning a reference to enum instance, not instantiating new object
         ErrorCode errorCode = appException.getErrorCode();
         ApiResponse apiResponse = new ApiResponse();

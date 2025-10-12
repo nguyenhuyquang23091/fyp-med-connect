@@ -3,6 +3,7 @@ package com.fyp.file_service.exceptions;
 
 
 import com.fyp.file_service.dto.response.ApiResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -15,17 +16,21 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 //Same as the class name
 //This class is used for all exception in 1 place
 @ControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
 @ExceptionHandler(value = Exception.class)
-    ResponseEntity<ApiResponse> handleRuntimeException(RuntimeException  runtimeException){
+    ResponseEntity<ApiResponse> handleRuntimeException(Exception exception){
+    log.error(exception.getMessage(), exception);
     ApiResponse apiResponse = new ApiResponse();
+
     apiResponse.setCode(ErrorCode.UNIDENTIFIED_EXCEPTION.getCode());
     apiResponse.setMessage(ErrorCode.UNIDENTIFIED_EXCEPTION.getMessage());
     return ResponseEntity.badRequest().body(apiResponse);
 }
     @ExceptionHandler(value = AppException.class)
     ResponseEntity<ApiResponse> handleAppException(AppException  appException){
+        log.error(appException.getMessage(), appException);
         //Assigning a reference to enum instance, not instantiating new object
         ErrorCode errorCode = appException.getErrorCode();
         ApiResponse apiResponse = new ApiResponse();

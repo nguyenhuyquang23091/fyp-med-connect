@@ -1,4 +1,4 @@
-package com.profile.profile_service.config;
+package com.fyp.rag_chat_bot.configuration;
 
 import org.springframework.util.StringUtils;
 import org.springframework.web.context.request.RequestContextHolder;

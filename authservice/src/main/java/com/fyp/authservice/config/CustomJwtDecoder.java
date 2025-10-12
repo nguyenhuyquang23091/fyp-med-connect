@@ -1,6 +1,9 @@
 package com.fyp.authservice.config;
 
 
+import com.fyp.authservice.exceptions.AppException;
+import com.fyp.authservice.exceptions.ErrorCode;
+import com.fyp.authservice.repository.TokenRepository;
 import com.fyp.authservice.service.AuthenticationService;
 import com.nimbusds.jwt.SignedJWT;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +24,7 @@ public class CustomJwtDecoder implements JwtDecoder {
     protected String SINGER_KEY  ;
     @Autowired
     private AuthenticationService authenticationService;
+
     private NimbusJwtDecoder nimbusJwtDecoder = null;
     // Encrypt the singerkey, then decode it using
     // the Nimbus decodes and compare the signature with the OAuth2 one
