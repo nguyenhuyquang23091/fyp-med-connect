@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Notification Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 3px; }
+        .connected { background-color: #d4edda; color: #155724; }
+        .disconnected { background-color: #f8d7da; color: #721c24; }
+        .message { background-color: #e2e3e5; color: #383d41; margin: 5px 0; padding: 8px; border-radius: 3px; }
+        button { padding: 10px 15px; margin: 5px; background-color: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        input, textarea { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 3px; }
+        .log { height: 200px; overflow-y: auto; background-color: #f8f9fa; padding: 10px; border: 1px solid #ddd; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WebSocket Notification Test</h1>
+        
+        <!-- Connection Status -->
+        <div class="section">
+            <h3>Connection Status</h3>
+            <div id="status" class="status disconnected">Disconnected</div>
+            <button id="connectBtn" onclick="connect()">Connect</button>
+            <button id="disconnectBtn" onclick="disconnect()" disabled>Disconnect</button>
+        </div>
+
+        <!-- User Configuration -->
+        <div class="section">
+            <h3>User Configuration</h3>
+            <label>Patient User ID:</label>
+            <input type="text" id="userId" value="patient-123" placeholder="Enter patient user ID">
+            <button onclick="subscribe()" id="subscribeBtn" disabled>Subscribe to Notifications</button>
+        </div>
+
+        <!-- Test Direct Notification -->
+        <div class="section">
+            <h3>Test Direct Notification (Simulate Profile Service Call)</h3>
+            <label>Recipient User ID:</label>
+            <input type="text" id="recipientId" value="patient-123">
+            
+            <label>Message:</label>
+            <input type="text" id="message" value="Doctor requesting access to prescription">
+            
+            <label>Request ID:</label>
+            <input type="text" id="requestId" value="req-123">
+            
+            <label>Prescription ID:</label>
+            <input type="text" id="prescriptionId" value="prescription-456">
+            
+            <button onclick="sendTestNotification()" id="testBtn" disabled>Send Test Notification</button>
+        </div>
+
+        <!-- Received Messages -->
+        <div class="section">
+            <h3>Received Messages</h3>
+            <div id="messages" class="log"></div>
+            <button onclick="clearMessages()">Clear Messages</button>
+        </div>
+
+        <!-- Connection Log -->
+        <div class="section">
+            <h3>Connection Log</h3>
+            <div id="log" class="log"></div>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+    </div>
+
+    <script>
+        let stompClient = null;
+        let subscribed = false;
+
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function addMessage(message) {
+            const messagesDiv = document.getElementById('messages');
+            const timestamp = new Date().toLocaleTimeString();
+            messagesDiv.innerHTML += `<div class="message">[${timestamp}] ${JSON.stringify(message, null, 2)}</div>`;
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function setConnectionStatus(connected) {
+            const statusDiv = document.getElementById('status');
+            const connectBtn = document.getElementById('connectBtn');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+            const subscribeBtn = document.getElementById('subscribeBtn');
+            const testBtn = document.getElementById('testBtn');
+
+            if (connected) {
+                statusDiv.textContent = 'Connected';
+                statusDiv.className = 'status connected';
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                subscribeBtn.disabled = false;
+                testBtn.disabled = false;
+            } else {
+                statusDiv.textContent = 'Disconnected';
+                statusDiv.className = 'status disconnected';
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                subscribeBtn.disabled = true;
+                testBtn.disabled = true;
+                subscribed = false;
+            }
+        }
+
+        function connect() {
+            log('Attempting to connect to WebSocket...');
+            
+            // Create SockJS connection
+            const socket = new SockJS('http://localhost:8085/notification/ws');
+            stompClient = Stomp.over(socket);
+
+            // Connect to STOMP
+            stompClient.connect({}, 
+                function(frame) {
+                    log('Connected successfully: ' + frame);
+                    setConnectionStatus(true);
+                },
+                function(error) {
+                    log('Connection error: ' + error);
+                    setConnectionStatus(false);
+                }
+            );
+        }
+
+        function disconnect() {
+            if (stompClient !== null) {
+                stompClient.disconnect();
+                log('Disconnected from WebSocket');
+            }
+            setConnectionStatus(false);
+        }
+
+        function subscribe() {
+            if (stompClient && stompClient.connected) {
+                const userId = document.getElementById('userId').value;
+                if (!userId) {
+                    alert('Please enter a User ID');
+                    return;
+                }
+
+                const subscription = `/user/${userId}/notifications`;
+                log(`Subscribing to: ${subscription}`);
+
+                stompClient.subscribe(subscription, function(message) {
+                    log('Received WebSocket message');
+                    const notificationRequest = JSON.parse(message.body);
+                    addMessage(notificationRequest);
+                });
+
+                subscribed = true;
+                log('Subscribed successfully');
+            } else {
+                log('Not connected to WebSocket');
+            }
+        }
+
+        function sendTestNotification() {
+            const recipientId = document.getElementById('recipientId').value;
+            const message = document.getElementById('message').value;
+            const requestId = document.getElementById('requestId').value;
+            const prescriptionId = document.getElementById('prescriptionId').value;
+
+            const payload = {
+                recipientUserId: recipientId,
+                notificationType: "ACCESS_REQUEST",
+                message: message,
+                requestId: requestId,
+                prescriptionId: prescriptionId
+            };
+
+            log('Sending test notificationRequest via REST API...');
+
+            fetch('http://localhost:8085/notification/send-notification', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    // Add Authorization header if needed
+                    // 'Authorization': 'Bearer your-jwt-token'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => response.json())
+            .then(data => {
+                log('REST API response: ' + JSON.stringify(data));
+            })
+            .catch(error => {
+                log('REST API error: ' + error);
+            });
+        }
+
+        function clearMessages() {
+            document.getElementById('messages').innerHTML = '';
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        // Initialize
+        window.onload = function() {
+            log('WebSocket test page loaded');
+            setConnectionStatus(false);
+        };
+
+        // Handle page unload
+        window.onbeforeunload = function() {
+            if (stompClient !== null) {
+                stompClient.disconnect();
+            }
+        };
+    </script>
+</body>
+</html>

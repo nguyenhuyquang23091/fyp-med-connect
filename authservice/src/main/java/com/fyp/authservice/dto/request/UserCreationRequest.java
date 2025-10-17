@@ -44,4 +44,9 @@ public class UserCreationRequest {
 
     @Size(max = 100, message = "City must not exceed 100 characters")
     String city;
+
+    @NotNull(message = "Gender is required")
+    @Pattern(regexp = "MALE|FEMALE|OTHER|PREFER_NOT_TO_SAY")
+    String gender;
+
 }
