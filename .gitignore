@@ -26,3 +26,19 @@ Thumbs.db
 rag-chat-bot/collections/
 rag-chat-bot/aliases/
 rag-chat-bot/raft_state.json
+
+# Environment variables - CRITICAL: Never commit these!
+**/.env
+.env
+*.env
+.env.*
+!.env.example
+!.env.template
+
+# Build artifacts
+**/target/
+target/
+*.class
+*.jar
+*.war
+*.ear
