@@ -1,8 +1,5 @@
 package com.fyp.authservice.dto.request;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -20,4 +17,5 @@ public class ProfileCreationRequest {
     String email;
     String city;
     LocalDate dob;
+    String gender;
 }

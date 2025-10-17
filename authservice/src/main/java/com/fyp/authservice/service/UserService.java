@@ -3,14 +3,18 @@ package com.fyp.authservice.service;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.fyp.authservice.constant.PredefinedRole;
 import com.fyp.authservice.dto.request.AdminUpdateRequest;
 import com.fyp.authservice.entity.Role;
 import com.fyp.authservice.mapper.ProfileMapper;
+import com.fyp.authservice.mapper.RoleMapper;
 import com.fyp.authservice.repository.RoleRepository;
 import com.fyp.authservice.repository.http_client.ProfileClient;
 import com.fyp.event.dto.NotificationEvent;
+import com.fyp.event.dto.UserRoleUpdateEvent;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -37,13 +41,15 @@ import javax.swing.plaf.nimbus.NimbusStyle;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class UserService {
-     UserRepository userRepository;
+    private final RoleMapper roleMapper;
+    UserRepository userRepository;
      RoleRepository roleRepository;
      ProfileClient profileClient;
       UserMapper userMapper;
       PasswordEncoder passwordEncoder;
       ProfileMapper profileMapper;
       KafkaTemplate<String, Object> kafkaTemplate;
+
 
     public UserResponse createUser(UserCreationRequest request)  {
         if (userRepository.existsByEmail(request.getEmail()))
@@ -58,7 +64,9 @@ public class UserService {
         var userProfileRequest = profileMapper.toProfileCreationRequest(request);
         userProfileRequest.setUserId(user.getId());
         userProfileRequest.setEmail(user.getEmail());
+        userProfileRequest.setGender(request.getGender());
 
+        profileClient.createProfile(userProfileRequest);
 
         NotificationEvent notificationEvent = NotificationEvent.builder()
                 .channel("EMAIL")
@@ -100,11 +108,28 @@ public class UserService {
     public UserResponse adminUpdateUser(String id, AdminUpdateRequest updateRequest ){
         User user = userRepository.findById(id).
                 orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED)) ;
+        Set<String> oldRoles = user.getRoles().stream().map(Role::getName).collect(Collectors.toSet());
         userMapper.adminUpdateUser(user, updateRequest);
         user.setPassword(passwordEncoder.encode(updateRequest.getPassword()));
         var roles = roleRepository.findAllById(updateRequest.getRoles());
         user.setRoles(new HashSet<>(roles));
-        return userMapper.toUserResponse(userRepository.save(user));
+
+        User savedUser = userRepository.save(user);
+        if(!oldRoles.equals(roles)){
+            Set<String> newRoles = savedUser.getRoles().stream().map(Role::getName).collect(Collectors.toSet());
+            UserRoleUpdateEvent userRoleUpdateEvent =
+                    UserRoleUpdateEvent.builder()
+                            .userId(savedUser.getId())
+                            .oldRoles(oldRoles)
+                            .newRoles(newRoles)
+                            .email(savedUser.getEmail())
+                            .build();
+            kafkaTemplate.send("user-role-updated", userRoleUpdateEvent);
+            log.info("Published role change event for user {} - Old roles: {}, New roles: {}",
+                    savedUser.getId(), oldRoles, newRoles);
+        }
+
+        return userMapper.toUserResponse(savedUser);
     }
 
 

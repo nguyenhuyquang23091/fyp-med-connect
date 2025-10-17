@@ -9,10 +9,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import com.profile.profile_service.constant.PrescriptionStatus;
-import com.profile.profile_service.dto.response.PrescriptionGeneralResponse;
-import com.profile.profile_service.dto.response.PrescriptionResponse;
-import com.profile.profile_service.entity.UserPrescription;
+import com.fyp.profile_service.constant.PrescriptionStatus;
+import com.fyp.profile_service.dto.response.PrescriptionGeneralResponse;
+import com.fyp.profile_service.dto.response.PrescriptionResponse;
+import com.fyp.profile_service.entity.UserPrescription;
+import com.fyp.profile_service.mapper.UserPrescriptionMapper;
 
 @SpringBootTest
 public class UserPrescriptionMapperTest {

@@ -30,7 +30,7 @@ spring:
         - id: profile-service-users
           uri: http://localhost:8081
           predicates:
-            - Path=${app.api-prefix}/profile/users/**
+            - Path=${app.api-prefix}/profile/**
           filters:
             - StripPrefix=2
             - AddRequestHeader=X-Calling-Service,profile-service
@@ -40,19 +40,8 @@ spring:
                 redis-rate-limiter.replenishRate: 10
                 redis-rate-limiter.burstCapacity: 20
                 redis-rate-limiter.requestedTokens: 1
-        - id: profile-service-prescription
-          uri: http://localhost:8081
-          predicates:
-            - Path=${app.api-prefix}/profile/prescription/**
-          filters:
-            - StripPrefix=2
-            - AddRequestHeader=X-Calling-Service,profile-service
-            # Standard limit for fetching prescriptions
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 10
-                redis-rate-limiter.burstCapacity: 20
-                redis-rate-limiter.requestedTokens: 1
+
+
         - id: chatbot
           uri: http://localhost:8082
           predicates:
@@ -77,6 +66,7 @@ spring:
                 redis-rate-limiter.replenishRate: 10
                 redis-rate-limiter.burstCapacity: 20
                 redis-rate-limiter.requestedTokens: 1
+
         - id: notification
           uri: http://localhost:8085
           predicates:
@@ -89,6 +79,7 @@ spring:
                 redis-rate-limiter.replenishRate: 10
                 redis-rate-limiter.burstCapacity: 15
                 redis-rate-limiter.requestedTokens: 1
+
         - id: notification-websocket
           uri: ws://localhost:8085
           predicates:
@@ -101,6 +92,7 @@ spring:
                 redis-rate-limiter.replenishRate: 2
                 redis-rate-limiter.burstCapacity: 5
                 redis-rate-limiter.requestedTokens: 1
+
         - id: file-management
           uri: http://localhost:8086
           predicates:

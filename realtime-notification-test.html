@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Notification Test</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background-color: #f5f5f5;
+        }
+        .container { 
+            max-width: 1000px; 
+            margin: 0 auto; 
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section { 
+            margin: 25px 0; 
+            padding: 20px; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 8px; 
+            background: #fafafa;
+        }
+        .section h3 {
+            margin-top: 0;
+            color: #444;
+        }
+        .status { 
+            padding: 12px; 
+            margin: 15px 0; 
+            border-radius: 5px; 
+            font-weight: bold;
+            text-align: center;
+        }
+        .connected { 
+            background-color: #d4edda; 
+            color: #155724; 
+            border: 1px solid #c3e6cb;
+        }
+        .disconnected { 
+            background-color: #f8d7da; 
+            color: #721c24; 
+            border: 1px solid #f5c6cb;
+        }
+        .notificationRequest {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            animation: slideIn 0.3s ease-out;
+        }
+        .notificationRequest-header {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+        .notificationRequest-body {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .notificationRequest-time {
+            font-size: 12px;
+            opacity: 0.8;
+            text-align: right;
+            margin-top: 8px;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        button { 
+            padding: 12px 20px; 
+            margin: 8px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer;
+            font-size: 14px;
+            transition: transform 0.2s;
+        }
+        button:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        button:disabled { 
+            background: #6c757d; 
+            cursor: not-allowed;
+            transform: none;
+        }
+        input { 
+            width: 100%; 
+            padding: 10px; 
+            margin: 8px 0; 
+            border: 1px solid #ddd; 
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .notifications-container {
+            height: 400px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            padding: 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+        }
+        .empty-state {
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
+            padding: 50px;
+        }
+        .trigger-section {
+            background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+        }
+        .trigger-section h3 {
+            color: #2d3436;
+        }
+        .counter {
+            background: #17a2b8;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            display: inline-block;
+            margin-left: 10px;
+        }
+        .test-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔔 Real-time Notification Test</h1>
+        
+        <!-- Connection Status -->
+        <div class="section">
+            <h3>📡 WebSocket Connection</h3>
+            <div id="status" class="status disconnected">Disconnected</div>
+            <button id="connectBtn" onclick="connect()">Connect to WebSocket</button>
+            <button id="disconnectBtn" onclick="disconnect()" disabled>Disconnect</button>
+        </div>
+
+        <!-- User Configuration -->
+        <div class="section">
+            <h3>👤 User Settings</h3>
+            <label><strong>Your Patient User ID:</strong></label>
+            <input type="text" id="userId" value="patient-123" placeholder="Enter your patient user ID">
+            <button onclick="subscribe()" id="subscribeBtn" disabled>🔔 Subscribe to Notifications</button>
+            <div id="subscriptionStatus"></div>
+        </div>
+
+        <!-- Quick Test Triggers -->
+        <div class="section trigger-section">
+            <h3>🚀 Quick Test Triggers</h3>
+            <p>Click these buttons to simulate different types of prescription access notifications:</p>
+            
+            <div class="test-buttons">
+                <button onclick="sendQuickTest('ACCESS_REQUEST')" id="testBtn1" disabled>
+                    📋 Doctor Access Request
+                </button>
+                <button onclick="sendQuickTest('ACCESS_APPROVED')" id="testBtn2" disabled>
+                    ✅ Access Approved  
+                </button>
+                <button onclick="sendQuickTest('ACCESS_DENIED')" id="testBtn3" disabled>
+                    ❌ Access Denied
+                </button>
+                <button onclick="sendQuickTest('PRESCRIPTION_UPDATE')" id="testBtn4" disabled>
+                    💊 Prescription Updated
+                </button>
+            </div>
+            
+            <div style="margin-top: 20px; padding: 15px; background: #e8f5e8; border-radius: 8px;">
+                <h4>🎯 Approve Request Test</h4>
+                <input type="text" id="requestIdInput" placeholder="Enter Request ID to approve" style="width: 70%; margin-right: 10px;">
+                <button onclick="approveRequest()" id="approveBtn" disabled>✅ Approve Request</button>
+                <div id="approveResult" style="margin-top: 10px; font-size: 14px;"></div>
+            </div>
+        </div>
+
+        <!-- Received Notifications -->
+        <div class="section">
+            <h3>📬 Received Notifications <span id="notificationCount" class="counter">0</span></h3>
+            <div id="notifications" class="notifications-container">
+                <div class="empty-state">
+                    🔊 Connect and subscribe to see real-time notifications here...
+                </div>
+            </div>
+            <button onclick="clearNotifications()">🗑️ Clear All</button>
+        </div>
+    </div>
+
+    <script>
+        let socket = null;
+        let subscribed = false;
+        let notificationCount = 0;
+
+        function updateConnectionStatus(connected) {
+            const statusDiv = document.getElementById('status');
+            const connectBtn = document.getElementById('connectBtn');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+            const subscribeBtn = document.getElementById('subscribeBtn');
+            const testBtns = ['testBtn1', 'testBtn2', 'testBtn3', 'testBtn4'];
+            const approveBtn = document.getElementById('approveBtn');
+
+            if (connected) {
+                statusDiv.textContent = '✅ Connected to Socket.IO';
+                statusDiv.className = 'status connected';
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                subscribeBtn.disabled = false;
+            } else {
+                statusDiv.textContent = '❌ Disconnected';
+                statusDiv.className = 'status disconnected';
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                subscribeBtn.disabled = true;
+                testBtns.forEach(id => document.getElementById(id).disabled = true);
+                approveBtn.disabled = true;
+                subscribed = false;
+                document.getElementById('subscriptionStatus').innerHTML = '';
+                document.getElementById('approveResult').innerHTML = '';
+            }
+        }
+
+        function connect() {
+            console.log('🔌 Attempting to connect to Socket.IO...');
+
+            const userId = document.getElementById('userId').value.trim();
+            if (!userId) {
+                alert('Please enter a User ID before connecting');
+                return;
+            }
+
+            // Connect to Socket.IO server with authentication
+            socket = io('http://localhost:9092', {
+                query: {
+                    token: 'demo-jwt-token', // Replace with actual JWT token
+                    userId: userId
+                },
+                transports: ['websocket', 'polling']
+            });
+
+            socket.on('connect', function() {
+                console.log('✅ Connected to Socket.IO server');
+                updateConnectionStatus(true);
+                setupSocketListeners();
+            });
+
+            socket.on('connect_error', function(error) {
+                console.error('❌ Connection error:', error);
+                updateConnectionStatus(false);
+                alert('Failed to connect to Socket.IO. Make sure the notification service is running on port 9092.');
+            });
+
+            socket.on('disconnect', function(reason) {
+                console.log('🔌 Disconnected from Socket.IO:', reason);
+                updateConnectionStatus(false);
+            });
+        }
+
+        function setupSocketListeners() {
+            if (socket) {
+                socket.on('notification', function(data) {
+                    console.log('📨 Received Socket.IO notification:', data);
+                    displayNotification(data);
+                });
+
+                subscribed = true;
+                const userId = document.getElementById('userId').value.trim();
+                document.getElementById('subscriptionStatus').innerHTML =
+                    `<p style="color: green; margin-top: 10px;">✅ Listening for notifications for user: <strong>${userId}</strong></p>`;
+
+                // Enable test buttons
+                ['testBtn1', 'testBtn2', 'testBtn3', 'testBtn4'].forEach(id =>
+                    document.getElementById(id).disabled = false
+                );
+
+                // Enable approve button
+                document.getElementById('approveBtn').disabled = false;
+            }
+        }
+
+        function disconnect() {
+            if (socket) {
+                socket.disconnect();
+                console.log('🔌 Disconnected from Socket.IO');
+                socket = null;
+            }
+            updateConnectionStatus(false);
+        }
+
+        function subscribe() {
+            if (socket && socket.connected) {
+                console.log('✅ Already connected and listening for notifications');
+            } else {
+                alert('Please connect to Socket.IO first');
+            }
+        }
+
+        function sendQuickTest(notificationType) {
+            const userId = document.getElementById('userId').value.trim();
+            
+            const testData = {
+                'ACCESS_REQUEST': {
+                    message: '👨‍⚕️ Dr. Sarah Johnson is requesting access to your diabetes medication prescription',
+                    icon: '📋'
+                },
+                'ACCESS_APPROVED': {
+                    message: '✅ You approved Dr. Michael Smith\'s access to your blood pressure medication',
+                    icon: '✅'
+                },
+                'ACCESS_DENIED': {
+                    message: '❌ You denied Dr. Emily Davis\'s prescription access request',
+                    icon: '❌'
+                },
+                'PRESCRIPTION_UPDATE': {
+                    message: '💊 Your prescription has been updated by Dr. Robert Wilson',
+                    icon: '💊'
+                }
+            };
+
+            const payload = {
+                recipientUserId: userId,
+                notificationType: notificationType,
+                message: testData[notificationType].message,
+                requestId: `req-${Date.now()}`,
+                prescriptionId: `presc-${Math.random().toString(36).substr(2, 9)}`
+            };
+
+            console.log('🚀 Sending test notificationRequest:', payload);
+
+            fetch('http://localhost:8085/notification/send-notification', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('✅ Test notificationRequest sent successfully:', data);
+            })
+            .catch(error => {
+                console.error('❌ Error sending test notificationRequest:', error);
+                alert('Failed to send test notificationRequest. Make sure the notificationRequest service is running.');
+            });
+        }
+
+        function displayNotification(notificationRequest) {
+            const notificationsDiv = document.getElementById('notifications');
+            
+            // Remove empty state if it exists
+            const emptyState = notificationsDiv.querySelector('.empty-state');
+            if (emptyState) {
+                emptyState.remove();
+            }
+
+            const notificationElement = document.createElement('div');
+            notificationElement.className = 'notificationRequest';
+            
+            const typeIcons = {
+                'ACCESS_REQUEST': '📋',
+                'ACCESS_APPROVED': '✅',
+                'ACCESS_DENIED': '❌',
+                'PRESCRIPTION_UPDATE': '💊'
+            };
+
+            const icon = typeIcons[notificationRequest.notificationType] || '🔔';
+            const timestamp = new Date().toLocaleTimeString();
+            
+            notificationElement.innerHTML = `
+                <div class="notificationRequest-header">
+                    ${icon} ${notificationRequest.notificationType.replace('_', ' ')}
+                </div>
+                <div class="notificationRequest-body">
+                    ${notificationRequest.message}
+                </div>
+                <div class="notificationRequest-time">
+                    📅 ${timestamp} | 🆔 Request: ${notificationRequest.requestId}
+                </div>
+            `;
+            
+            // Add to top of notifications
+            notificationsDiv.insertBefore(notificationElement, notificationsDiv.firstChild);
+            
+            // Update counter
+            notificationCount++;
+            document.getElementById('notificationCount').textContent = notificationCount;
+            
+            // Scroll to top to show new notificationRequest
+            notificationsDiv.scrollTop = 0;
+        }
+
+        function approveRequest() {
+            const requestId = document.getElementById('requestIdInput').value.trim();
+            const resultDiv = document.getElementById('approveResult');
+            
+            if (!requestId) {
+                resultDiv.innerHTML = '<p style="color: red;">❌ Please enter a Request ID</p>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<p style="color: blue;">⏳ Approving request...</p>';
+            
+            console.log('🎯 Approving request:', requestId);
+            
+            fetch(`http://localhost:8081/profile/prescription/access-request/${requestId}/approve`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer your-jwt-token-here' // You may need to add proper auth
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('✅ Request approved successfully:', data);
+                resultDiv.innerHTML = `
+                    <p style="color: green;">✅ Request approved successfully!</p>
+                    <p style="font-size: 12px; color: #666;">Status: ${data.result?.status || 'APPROVED'}</p>
+                `;
+                // Clear the input field
+                document.getElementById('requestIdInput').value = '';
+            })
+            .catch(error => {
+                console.error('❌ Error approving request:', error);
+                resultDiv.innerHTML = `
+                    <p style="color: red;">❌ Failed to approve request</p>
+                    <p style="font-size: 12px; color: #666;">Error: ${error.message}</p>
+                `;
+            });
+        }
+
+        function clearNotifications() {
+            const notificationsDiv = document.getElementById('notifications');
+            notificationsDiv.innerHTML = '<div class="empty-state">🔊 Connect and subscribe to see real-time notifications here...</div>';
+            notificationCount = 0;
+            document.getElementById('notificationCount').textContent = '0';
+        }
+
+        // Initialize
+        window.onload = function() {
+            console.log('🚀 Real-time notificationRequest test page loaded');
+            updateConnectionStatus(false);
+        };
+
+        // Handle page unload
+        window.onbeforeunload = function() {
+            if (socket !== null) {
+                socket.disconnect();
+            }
+        };
+    </script>
+</body>
+</html>

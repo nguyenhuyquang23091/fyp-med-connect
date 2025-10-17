@@ -1,0 +1,7 @@
+package com.fyp.profile_service.constant;
+
+public enum PrescriptionStatus {
+    PENDING_DOCTOR_REVIEW,
+    DOCTOR_REVIEWED,
+    CANCELLED
+}
