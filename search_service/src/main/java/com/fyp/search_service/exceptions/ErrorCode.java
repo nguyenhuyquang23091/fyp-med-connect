@@ -1,4 +1,4 @@
-package com.fyp.appointment_service.exceptions;
+package com.fyp.search_service.exceptions;
 
 
 import lombok.Getter;

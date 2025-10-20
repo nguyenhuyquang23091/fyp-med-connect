@@ -1,11 +1,13 @@
 package com.fyp.appointment_service.dto.response;
 
+import com.fyp.appointment_service.constant.AppointmentStatus;
+import com.fyp.appointment_service.constant.ConsultationType;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.LocalDate;
-
+import java.time.LocalDateTime;
 
 @Data
 @Builder
@@ -13,11 +15,26 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class AppointmentResponse {
+    String id;
     String userId;
-    String reasons;
-    String note;
     String doctorId;
-    LocalDate appointment_date;
+
+    String patientFullName;
+    String doctorFullName;
+
+    String reasons;
+    String phoneNumber;
+
+    LocalDateTime appointmentDateTime;
+
+    String specialty;
+    String services;
+
+    AppointmentStatus appointmentStatus;
+    ConsultationType consultationType;
+
+    BigDecimal prices;
+
     Instant createdDate;
     Instant modifiedDate;
 }
