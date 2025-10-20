@@ -13,6 +13,13 @@ PRPs
 *.swp
 *.swo
 *~
+  .env
+  **/.env
+  *.env
+  .env.local
+  .env.*.local
+
+
 
 # OS generated files
 .DS_Store
