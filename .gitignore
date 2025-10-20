@@ -13,12 +13,12 @@ PRPs
 *.swp
 *.swo
 *~
-  .env
-  **/.env
-  *.env
-  .env.local
-  .env.*.local
-
+  authservice/src/main/resources/.env
+  appointment_service/src/main/resources/.env
+  notification_service/src/main/resources/.env
+  profile_service/src/main/resources/.env
+  rag-chat-bot/src/main/resources/.env
+  search_service/src/main/resources/.env
 
 
 # OS generated files
