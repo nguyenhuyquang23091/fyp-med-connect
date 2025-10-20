@@ -13,12 +13,8 @@ PRPs
 *.swp
 *.swo
 *~
-  authservice/src/main/resources/.env
-  appointment_service/src/main/resources/.env
-  notification_service/src/main/resources/.env
-  profile_service/src/main/resources/.env
-  rag-chat-bot/src/main/resources/.env
-  search_service/src/main/resources/.env
+
+
 
 
 # OS generated files
@@ -33,3 +29,22 @@ Thumbs.db
 rag-chat-bot/collections/
 rag-chat-bot/aliases/
 rag-chat-bot/raft_state.json
+
+# Environment files - DO NOT COMMIT
+*.env
+.env
+.env.*
+!.env.example
+
+# Specific .env files in services
+appointment_service/src/main/resources/.env
+authservice/src/main/resources/.env
+file_service/src/main/resources/.env
+notification_service/src/main/resources/.env
+profile_service/src/main/resources/.env
+rag-chat-bot/src/main/resources/.env
+search_service/src/main/resources/.env
+api-gateway/src/main/resources/.env
+
+# Build output .env files
+**/target/classes/.env
