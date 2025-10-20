@@ -2,6 +2,7 @@ server:
     port: 8084
     servlet:
         context-path : /appointment
+
 spring:
     datasource:
         url: ${POSTGRES_URL:}
@@ -11,5 +12,10 @@ spring:
         hibernate:
             ddl-auto: update
         show-sql: true
+
+# Microservice URLs
+microservices:
+    profile-service:
+        url: ${PROFILE_SERVICE_URL:http://localhost:8081}
 
 

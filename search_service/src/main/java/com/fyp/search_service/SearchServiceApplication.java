@@ -1,19 +1,18 @@
-package com.fyp.appointment_service;
+package com.fyp.search_service;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cloud.openfeign.EnableFeignClients;
 
 @SpringBootApplication
-@EnableFeignClients
-public class AppointmentServiceApplication {
+public class SearchServiceApplication {
 
 	public static void main(String[] args) {
 		Dotenv dotenv = Dotenv.load();
 		dotenv.entries().forEach(entry -> {
 			System.setProperty(entry.getKey(), entry.getValue());
 		});
-		SpringApplication.run(AppointmentServiceApplication.class, args);
+		SpringApplication.run(SearchServiceApplication.class, args);
 	}
+
 }
