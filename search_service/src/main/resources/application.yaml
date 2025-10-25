@@ -13,10 +13,18 @@ spring:
     consumer:
       group-id: search-service-cdc-group
       auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      # Reason: ErrorHandlingDeserializer wraps the actual deserializer to catch SerializationExceptions
+      # This prevents the consumer from crashing when malformed messages are received
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
       properties:
         spring.json.trusted.packages: "*"
+        # Reason: Delegate deserializers are the actual deserializers that ErrorHandlingDeserializer wraps
+        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        # Reason: Debezium sends the payload directly without an outer wrapper
+        # The CDC event structure matches DebeziumEvent.Payload, not DebeziumEvent
+        spring.json.value.default.type: com.fyp.event.dto.DebeziumEvent$Payload
 
 logging:
   level:

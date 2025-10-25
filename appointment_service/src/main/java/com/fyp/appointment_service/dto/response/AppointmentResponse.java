@@ -35,6 +35,8 @@ public class AppointmentResponse {
 
     BigDecimal prices;
 
+    String paymentURL;
+
     Instant createdDate;
     Instant modifiedDate;
 }

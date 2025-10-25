@@ -17,5 +17,7 @@ spring:
 microservices:
     profile-service:
         url: ${PROFILE_SERVICE_URL:http://localhost:8081}
+    payment-service:
+        url: ${PAYMENT_SERVICE_URL:http://localhost:8083}
 
 

@@ -15,6 +15,7 @@
         <option value="$PROJECT_DIR$/notification_service/pom.xml" />
         <option value="$PROJECT_DIR$/file_service/pom.xml" />
         <option value="$PROJECT_DIR$/rag-chat-bot/pom.xml" />
+        <option value="$PROJECT_DIR$/search_service/pom.xml" />
       </list>
     </option>
     <option name="ignoredFiles">

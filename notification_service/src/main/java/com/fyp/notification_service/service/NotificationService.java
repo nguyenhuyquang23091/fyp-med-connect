@@ -103,10 +103,8 @@ public class NotificationService {
 
         Sort sort = Sort.by("createdAt").descending();
         Pageable pageable = PageRequest.of(page - 1, size, sort);
-
         // Fetch ALL notifications (both processed and unprocessed)
         var notification = notificationRepository.findByRecipientUserId(recipientUserId, pageable);
-
         return PageResponse.<NotificationResponse>builder()
                 .currentPage(page)
                 .pageSize(notification.getSize())
@@ -116,7 +114,8 @@ public class NotificationService {
                 .build();
     }
 
-    public void deleteNotification(String notificationId){
+    public void deleteNotification(String notificationId)
+    {
         notificationRepository.deleteById(notificationId);
     }
 
@@ -129,13 +128,11 @@ public class NotificationService {
         notificationOpt.setIsProcessed(true);
 
         notificationRepository.save(notificationOpt);
-
         Map<String, Object> statusUpdate = new HashMap<>();
         statusUpdate.put("notificationType", PredefinedNotificationType.REQUEST_STATUS_CHANGED);
         statusUpdate.put("notificationId", notificationOpt.getId());
         statusUpdate.put("requestId", requestId);
         statusUpdate.put("action", "REMOVE");
-
         String roomName = "user_" + recipientUserId;
 
         socketIOServer.getRoomOperations(roomName).sendEvent("notification_update", statusUpdate);

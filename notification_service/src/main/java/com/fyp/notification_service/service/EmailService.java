@@ -44,6 +44,7 @@ public class EmailService {
             return emailClient.sendEmail(apiKey, emailRequest);
 
         } catch ( FeignException.FeignClientException exception){
+            log.error("Detail of current issue when sending email {}", exception.getMessage());
             throw new AppException(ErrorCode.CAN_NOT_SEND_EMAIL);
         }
     }

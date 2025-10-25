@@ -1,13 +1,24 @@
+socket:
+  host: localhost
+  port: 9092
 spring:
   application:
-    api-prefix: ${API_PREFIX}
-    name: spring-boot-rest-api
+    name: vnpay-service
+  datasource:
+    url: ${POSTGRES_URL}
+    username: ${POSTGRES_USERNAME}
+    password: ${POSTGRES_PASSWORD}
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
 server:
-  port: ${API_PORT}
+  port: 8083
 
 payment:
   vnPay:
@@ -18,3 +29,8 @@ payment:
     version: ${VERSION}
     command: ${COMMAND}
     orderType: ${ORDER_TYPE}
+
+# Microservice URLs
+microservices:
+  profile-service:
+    url: ${PROFILE_SERVICE_URL:http://localhost:8081}
