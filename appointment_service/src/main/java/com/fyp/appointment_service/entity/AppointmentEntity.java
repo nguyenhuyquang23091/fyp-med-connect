@@ -35,7 +35,7 @@ public class AppointmentEntity {
     String specialty;
     String services;
     @Enumerated(EnumType.STRING)
-            @Column(nullable = false)
+    @Column(nullable = false)
     AppointmentStatus appointmentStatus;
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

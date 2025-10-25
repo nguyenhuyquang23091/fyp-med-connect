@@ -23,45 +23,61 @@ public class KafkaCdcEventListener {
     UserSearchService userSearchService;
     AppointmentSearchService appointmentSearchService;
 
-
     @KafkaListener(topics = "cdc.authservice.public.users", groupId = "search-service-cdc-group")
-    public void handleUserEventListener(DebeziumEvent<Map<String, Object>> debeziumEvent)  {
+    public void handleUserEventListener(DebeziumEvent.Payload<Map<String, Object>> payload)  {
         try {
+                String operation = payload.getOperation();
 
-                String operation = debeziumEvent.getPayload().getOperation();
-                DebeziumEvent.Payload<Map<String, Object>> debeziumEventPayload = debeziumEvent.getPayload();
+                log.debug("Processing user CDC event - operation: {}, timestamp: {}", operation, payload.getTimestamp());
 
                 switch (operation) {
                     case "c", "r", "u":
-                        userSearchService.saveUser(debeziumEventPayload.getAfter());
+                        if (payload.getAfter() != null) {
+                            userSearchService.saveUser(payload.getAfter());
+                        } else {
+                            log.warn("Received {} operation but 'after' is null", operation);
+                        }
                         break;
                     case "d":
-                        String userId = debeziumEventPayload.getBefore().get("id").toString();
-                        userSearchService.deleteUser(userId);
+                        if (payload.getBefore() != null) {
+                            String userId = payload.getBefore().get("id").toString();
+                            userSearchService.deleteUser(userId);
+                        } else {
+                            log.warn("Received delete operation but 'before' is null");
+                        }
                         break;
                     default:
                        log.info("Unknown operation type {}", operation);
                 }
 
         } catch (Exception e) {
-            log.error("Error processing appointment CDC event", e);
+            log.error("Error processing user CDC event", e);
         }
     }
 
     @KafkaListener(topics = "cdc.appointmentservice.public.appointments", groupId = "search-service-cdc-group")
-    public void handleAppointmentEventListener(DebeziumEvent<Map<String, Object>> debeziumEvent) {
+    public void handleAppointmentEventListener(DebeziumEvent.Payload<Map<String, Object>> payload) {
         try {
-            String operation  = debeziumEvent.getPayload().getOperation();
-            DebeziumEvent.Payload<Map<String, Object>>  debeziumEventPayload = debeziumEvent.getPayload();
+            String operation = payload.getOperation();
+
+            log.debug("Processing appointment CDC event - operation: {}, timestamp: {}", operation, payload.getTimestamp());
 
             switch (operation) {
                 case "c", "r", "u":
-                appointmentSearchService.indexAppointment(debeziumEventPayload.getAfter());
-                break;
+                    if (payload.getAfter() != null) {
+                        appointmentSearchService.indexAppointment(payload.getAfter());
+                    } else {
+                        log.warn("Received {} operation but 'after' is null", operation);
+                    }
+                    break;
 
                 case "d":
-                    String appointmentId =  debeziumEventPayload.getBefore().get("id").toString();
-                    appointmentSearchService.deleteAppointment(appointmentId);
+                    if (payload.getBefore() != null) {
+                        String appointmentId = payload.getBefore().get("id").toString();
+                        appointmentSearchService.deleteAppointment(appointmentId);
+                    } else {
+                        log.warn("Received delete operation but 'before' is null");
+                    }
                     break;
                 default:
                     log.info("Unknown appointment operation {}", operation);

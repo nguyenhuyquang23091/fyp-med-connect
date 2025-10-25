@@ -1,8 +1,9 @@
-package com.fyp.appointment_service.configuration;
+package com.profile.vnpay.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fyp.appointment_service.dto.request.ApiResponse;
-import com.fyp.appointment_service.exceptions.ErrorCode;
+
+import com.profile.vnpay.dto.response.ApiResponse;
+import com.profile.vnpay.exceptions.ErrorCode;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

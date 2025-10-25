@@ -26,18 +26,15 @@ public class UserSearchService {
             try {
                 UserEntity user = userCdcMapper.toUserEntity(userData);
                 userSearchRepository.save(user);
-
             } catch (Exception e) {
                 log.error("Error indexing user: {}", userData.get("id"), e);
             }
     }
 
-
     public void deleteUser(String userId){
         try {
 
       userSearchRepository.deleteById(userId);
-
         }
         catch (Exception e){
             log.error("Error deleting user: {}",userId, e);

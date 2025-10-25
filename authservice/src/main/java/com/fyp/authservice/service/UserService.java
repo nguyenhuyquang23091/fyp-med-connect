@@ -65,9 +65,7 @@ public class UserService {
         userProfileRequest.setUserId(user.getId());
         userProfileRequest.setEmail(user.getEmail());
         userProfileRequest.setGender(request.getGender());
-
         profileClient.createProfile(userProfileRequest);
-
         NotificationEvent notificationEvent = NotificationEvent.builder()
                 .channel("EMAIL")
                 .recipient(request.getEmail())

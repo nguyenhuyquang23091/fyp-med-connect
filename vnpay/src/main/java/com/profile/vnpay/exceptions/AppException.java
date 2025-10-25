@@ -1,7 +1,6 @@
-package com.fyp.authservice.exceptions;
+package com.profile.vnpay.exceptions;
 
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
