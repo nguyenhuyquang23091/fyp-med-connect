@@ -128,7 +128,6 @@
       <module name="demo" target="17" />
       <module name="profile-service" target="23" />
       <module name="profile_service (1)" target="17" />
-      <module name="search_service" target="17" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
