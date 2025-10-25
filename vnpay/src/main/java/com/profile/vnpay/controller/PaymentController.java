@@ -32,7 +32,7 @@ public class PaymentController {
     }
 
     @GetMapping("/vnpay-return")
-    public ApiResponse<PaymentResponse> handleVnpayReturn(HttpServletRequest request) {
+    public ApiResponse<PaymentResponse> handleVNPayReturn(HttpServletRequest request) {
         Map<String, String> params = new HashMap<>();
         for (Enumeration<String> en = request.getParameterNames(); en.hasMoreElements();) {
             String key = en.nextElement();
