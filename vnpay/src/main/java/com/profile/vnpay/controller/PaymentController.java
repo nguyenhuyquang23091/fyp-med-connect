@@ -41,10 +41,11 @@ public class PaymentController {
                 params.put(key, value);
             }
         }
-        // modify to connect through web-socket to transfer information
+        // After our service handle VnPAY URL. It will emit an event to web socket where FE will register
+        //to the same socket and listen to payment changes from BE side
+
         PaymentResponse paymentResponse = paymentService.handleVnPayReturnUrl(params);
         socketIOServer.getBroadcastOperations().sendEvent("payment:update", paymentResponse);
-
 
         return ApiResponse.<PaymentResponse>builder().result(paymentResponse).build();
     }
