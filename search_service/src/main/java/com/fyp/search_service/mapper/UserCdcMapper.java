@@ -21,12 +21,7 @@ public interface UserCdcMapper {
     @Mapping(target = "profileImageUrl", expression = "java(toString(cdcData.get(\"profile_image_url\")))")
     UserEntity toUserEntity(Map<String, Object> cdcData);
 
-    /**
-     * Safely converts Object to String, handling null values.
-     *
-     * @param obj the object to convert to String
-     * @return String representation of the object, or null if input is null
-     */
+
     default String toString(Object obj) {
         return obj != null ? obj.toString() : null;
     }

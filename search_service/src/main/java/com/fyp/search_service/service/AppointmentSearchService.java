@@ -20,7 +20,8 @@ public class AppointmentSearchService {
     AppointmentSearchRepository appointmentSearchRepository;
     AppointmentCdcMapper appointmentCdcMapper;
 
-    public void indexAppointment(Map<String, Object> appointmentData) {
+
+    public void saveAppointment(Map<String, Object> appointmentData) {
         try {
             AppointmentEntity appointment = appointmentCdcMapper.toAppointmentEntity(appointmentData);
             appointmentSearchRepository.save(appointment);

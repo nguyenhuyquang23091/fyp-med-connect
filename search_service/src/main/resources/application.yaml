@@ -10,21 +10,27 @@ spring:
 
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9094}
+
+    # Producer configuration for retry and DLT topics
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: true
+
     consumer:
       group-id: search-service-cdc-group
       auto-offset-reset: earliest
-      # Reason: ErrorHandlingDeserializer wraps the actual deserializer to catch SerializationExceptions
-      # This prevents the consumer from crashing when malformed messages are received
+
       key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
       properties:
         spring.json.trusted.packages: "*"
-        # Reason: Delegate deserializers are the actual deserializers that ErrorHandlingDeserializer wraps
         spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
         spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
-        # Reason: Debezium sends the payload directly without an outer wrapper
-        # The CDC event structure matches DebeziumEvent.Payload, not DebeziumEvent
-        spring.json.value.default.type: com.fyp.event.dto.DebeziumEvent$Payload
+        spring.json.type.mapping: "doctorProfileCdc:com.fyp.event.dto.DoctorProfileCdcEvent,debezium:com.fyp.event.dto.DebeziumPayload"
+        spring.json.value.default.type: "com.fyp.event.dto.DebeziumPayload"
+
 
 logging:
   level:
