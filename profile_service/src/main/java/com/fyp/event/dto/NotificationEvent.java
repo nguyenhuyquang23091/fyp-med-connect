@@ -1,4 +1,4 @@
-package com.fyp.profile_service.event.dto;
+package com.fyp.event.dto;
 
 import java.util.Map;
 

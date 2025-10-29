@@ -21,14 +21,15 @@ spring:
     consumer:
       group-id: search-service-cdc-group
       auto-offset-reset: earliest
-
       key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
       properties:
         spring.json.trusted.packages: "*"
         spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
         spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        # if header found -> map doctorProfileCDc to DoctorProfile CDC Event ( this is used for profile/doctorProfile)
         spring.json.type.mapping: "doctorProfileCdc:com.fyp.event.dto.DoctorProfileCdcEvent,debezium:com.fyp.event.dto.DebeziumPayload"
+        # if no header found || no mapping matches,fall back to debezium payload ( this is used for appointment/users)
         spring.json.value.default.type: "com.fyp.event.dto.DebeziumPayload"
 
 

@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 import com.fyp.profile_service.constant.AccessStatus;
 import com.fyp.profile_service.entity.PrescriptionAccess;
 import com.fyp.profile_service.entity.UserProfile;
-import com.fyp.profile_service.event.dto.NotificationEvent;
+import com.fyp.event.dto.NotificationEvent;
 import com.fyp.profile_service.repository.PrescriptionAccessRepository;
 import com.fyp.profile_service.repository.UserProfileRepository;
 

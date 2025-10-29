@@ -20,6 +20,9 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: true
+        spring.json.type.mapping:  doctorProfileCdc:com.fyp.event.dto.DoctorProfileCdcEvent
     consumer:
       group-id: profile-service-group
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer

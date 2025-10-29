@@ -5,11 +5,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.fyp.profile_service.dto.request.DoctorProfileUpdateRequest;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fyp.event.dto.DoctorProfileEntityType;
 import com.fyp.profile_service.dto.request.DoctorExperienceUpdateRequest;
 import com.fyp.profile_service.dto.request.DoctorServiceRequest;
 import com.fyp.profile_service.dto.request.DoctorSpecialtyRequest;
@@ -21,6 +23,7 @@ import com.fyp.profile_service.entity.*;
 import com.fyp.profile_service.exceptions.AppException;
 import com.fyp.profile_service.exceptions.ErrorCode;
 import com.fyp.profile_service.mapper.DoctorExperienceRelationshipMapper;
+import com.fyp.profile_service.mapper.DoctorProfileCdcMapper;
 import com.fyp.profile_service.mapper.DoctorProfileMapper;
 import com.fyp.profile_service.mapper.DoctorServiceRelationshipMapper;
 import com.fyp.profile_service.mapper.DoctorSpecialtyRelationshipMapper;
@@ -57,6 +60,42 @@ public class DoctorProfileService {
     DoctorProfileMapper doctorProfileMapper;
     UserProfileRepository userProfileRepository;
 
+    DoctorProfileCdcProducer cdcProducer;
+    DoctorProfileCdcMapper cdcMapper;
+
+    // dùng valid thay vì cái đống đù má check if else bằng null hay không
+    @PreAuthorize("hasRole('DOCTOR')")
+    @Transactional
+    public DoctorProfileResponse updateBaseDoctorProfile(DoctorProfileUpdateRequest request){
+    String userId = ProfileServiceUtil.getCurrentUserId();
+    DoctorProfile doctorProfile = doctorProfileRepository.findByUserId(userId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+    Map<String, Object> beforeState =  cdcMapper.toProfileMap(doctorProfile);
+
+    doctorProfile.setBio(request.getBio());
+    doctorProfile.setResidency(request.getResidency());
+    doctorProfile.setYearsOfExperience(request.getYearsOfExperience());
+    doctorProfile.setIsAvailable(request.getIsAvailable());
+    doctorProfile.setLanguages(request.getLanguages());
+
+    doctorProfileRepository.save(doctorProfile);
+    Map<String, Object> afterState = cdcMapper.toProfileMap(doctorProfile);
+
+    cdcProducer.publishUpdate(DoctorProfileEntityType.PROFILE, beforeState, afterState, doctorProfile.getId(), doctorProfile.getUserId());
+
+
+        UserProfile basicUserProfile = userProfileRepository
+                .findByUserId(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        return doctorProfileMapper.toResponse(doctorProfile, basicUserProfile);
+
+
+
+
+    }
+
+
     @PreAuthorize("hasRole('DOCTOR')")
     @Transactional
     public DoctorServiceResponse addServiceToProfile(DoctorServiceRequest request) {
@@ -81,8 +120,11 @@ public class DoctorProfileService {
         relationship.setService(service);
 
         doctorProfile.getServices().add(relationship);
-        doctorProfileRepository.save(doctorProfile);
+        doctorProfile = doctorProfileRepository.save(doctorProfile);
 
+        // Publish CDC event for service creation
+        Map<String, Object> afterState = cdcMapper.toServiceMap(relationship);
+        cdcProducer.publishCreate(DoctorProfileEntityType.SERVICE, afterState, doctorProfile.getId(), userId);
         log.info("Doctor {} added service: {}", userId, service.getName());
         return serviceRelationshipMapper.toResponse(relationship);
     }
@@ -99,6 +141,9 @@ public class DoctorProfileService {
                 .filter(rel -> rel.getId().equals(relationshipId))
                 .findFirst()
                 .orElseThrow(() -> new AppException(ErrorCode.DOCTOR_SERVICE_NOT_FOUND));
+
+        // Capture before state for CDC
+        Map<String, Object> beforeState = cdcMapper.toServiceMap(relationship);
 
         if (!relationship.getService().getId().equals(request.getServiceId())) {
             MedicalService newService = medicalServiceRepository
@@ -117,7 +162,13 @@ public class DoctorProfileService {
         }
 
         serviceRelationshipMapper.updateRelationship(relationship, request);
-        doctorProfileRepository.save(doctorProfile);
+        doctorProfile = doctorProfileRepository.save(doctorProfile);
+
+        // Capture after state for CDC
+        Map<String, Object> afterState = cdcMapper.toServiceMap(relationship);
+
+        // Publish CDC event for service update
+        cdcProducer.publishUpdate(DoctorProfileEntityType.SERVICE, beforeState, afterState, doctorProfile.getId(), userId);
 
         log.info("Doctor {} updated service relationship {}", userId, relationshipId);
         return serviceRelationshipMapper.toResponse(relationship);
@@ -136,8 +187,14 @@ public class DoctorProfileService {
                 .findFirst()
                 .orElseThrow(() -> new AppException(ErrorCode.DOCTOR_SERVICE_NOT_FOUND));
 
+        // Capture before state for CDC
+        Map<String, Object> beforeState = cdcMapper.toServiceMap(relationshipToRemove);
+
         doctorProfile.getServices().remove(relationshipToRemove);
         doctorProfileRepository.save(doctorProfile);
+
+        // Publish CDC event for service deletion
+        cdcProducer.publishDelete(DoctorProfileEntityType.SERVICE, beforeState, doctorProfile.getId(), userId);
 
         log.info("Doctor {} removed service relationship {}", userId, relationshipId);
     }
@@ -181,7 +238,11 @@ public class DoctorProfileService {
         relationship.setSpecialty(specialty);
 
         doctorProfile.getSpecialties().add(relationship);
-        doctorProfileRepository.save(doctorProfile);
+        doctorProfile = doctorProfileRepository.save(doctorProfile);
+
+        // Publish CDC event for specialty creation
+        Map<String, Object> afterState = cdcMapper.toSpecialtyMap(relationship);
+        cdcProducer.publishCreate(DoctorProfileEntityType.SPECIALTY, afterState, doctorProfile.getId(), userId);
 
         log.info("Doctor {} added specialty: {}", userId, specialty.getName());
         return specialtyRelationshipMapper.toResponse(relationship);
@@ -199,6 +260,9 @@ public class DoctorProfileService {
                 .filter(rel -> rel.getId().equals(relationshipId))
                 .findFirst()
                 .orElseThrow(() -> new AppException(ErrorCode.DOCTOR_SPECIALTY_NOT_FOUND));
+
+        // Capture before state for CDC
+        Map<String, Object> beforeState = cdcMapper.toSpecialtyMap(relationship);
 
         if (!relationship.getSpecialty().getId().equals(request.getSpecialtyId())) {
             Specialty newSpecialty = specialtyRepository
@@ -225,7 +289,13 @@ public class DoctorProfileService {
         }
 
         specialtyRelationshipMapper.updateRelationship(relationship, request);
-        doctorProfileRepository.save(doctorProfile);
+        doctorProfile = doctorProfileRepository.save(doctorProfile);
+
+        // Capture after state for CDC
+        Map<String, Object> afterState = cdcMapper.toSpecialtyMap(relationship);
+
+        // Publish CDC event for specialty update
+        cdcProducer.publishUpdate(DoctorProfileEntityType.SPECIALTY, beforeState, afterState, doctorProfile.getId(), userId);
 
         log.info("Doctor {} updated specialty relationship {}", userId, relationshipId);
         return specialtyRelationshipMapper.toResponse(relationship);
@@ -244,8 +314,14 @@ public class DoctorProfileService {
                 .findFirst()
                 .orElseThrow(() -> new AppException(ErrorCode.DOCTOR_SPECIALTY_NOT_FOUND));
 
+        // Capture before state for CDC
+        Map<String, Object> beforeState = cdcMapper.toSpecialtyMap(relationshipToRemove);
+
         doctorProfile.getSpecialties().remove(relationshipToRemove);
         doctorProfileRepository.save(doctorProfile);
+
+        // Publish CDC event for specialty deletion
+        cdcProducer.publishDelete(DoctorProfileEntityType.SPECIALTY, beforeState, doctorProfile.getId(), userId);
 
         log.info("Doctor {} removed specialty relationship {}", userId, relationshipId);
     }

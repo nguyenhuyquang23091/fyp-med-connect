@@ -9,12 +9,7 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-/**
- * Request DTO for creating a user profile.
- *
- * Note: Role is NOT included here as it's managed by AuthService.
- * ProfileService only stores profile-specific information.
- */
+
 @Data
 @Builder
 @NoArgsConstructor

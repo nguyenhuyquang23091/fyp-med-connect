@@ -1,11 +1,13 @@
 package com.fyp.profile_service.service;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fyp.event.dto.DoctorProfileEntityType;
 import com.fyp.profile_service.dto.request.PracticeExperienceRequest;
 import com.fyp.profile_service.dto.response.PracticeExperienceResponse;
 import com.fyp.profile_service.entity.DoctorExperienceRelationship;
@@ -13,6 +15,7 @@ import com.fyp.profile_service.entity.DoctorProfile;
 import com.fyp.profile_service.entity.PracticeExperience;
 import com.fyp.profile_service.exceptions.AppException;
 import com.fyp.profile_service.exceptions.ErrorCode;
+import com.fyp.profile_service.mapper.DoctorProfileCdcMapper;
 import com.fyp.profile_service.mapper.PracticeExperienceMapper;
 import com.fyp.profile_service.repository.DoctorProfileRepository;
 import com.fyp.profile_service.repository.PracticeExperienceRepository;
@@ -32,6 +35,8 @@ public class PracticeExperienceService {
     PracticeExperienceRepository practiceExperienceRepository;
     DoctorProfileRepository doctorProfileRepository;
     PracticeExperienceMapper practiceExperienceMapper;
+    DoctorProfileCdcProducer cdcProducer;
+    DoctorProfileCdcMapper cdcMapper;
 
     @PreAuthorize("hasRole('DOCTOR')")
     @Transactional
@@ -52,7 +57,11 @@ public class PracticeExperienceService {
                 .build();
 
         doctorProfile.getPracticeExperience().add(relationship);
-        doctorProfileRepository.save(doctorProfile);
+        doctorProfile = doctorProfileRepository.save(doctorProfile);
+
+        // Publish CDC event for experience creation
+        Map<String, Object> afterState = cdcMapper.toExperienceMap(relationship);
+        cdcProducer.publishCreate(DoctorProfileEntityType.EXPERIENCE, afterState, doctorProfile.getId(), userId);
 
         log.info("Doctor {} added practice experience at {}", userId, experience.getHospitalName());
         return practiceExperienceMapper.toPracticeExperienceResponse(experience);
@@ -71,15 +80,23 @@ public class PracticeExperienceService {
                 .findById(experienceId)
                 .orElseThrow(() -> new AppException(ErrorCode.PRACTICE_EXPERIENCE_NOT_FOUND));
 
-        boolean isOwned = doctorProfile.getPracticeExperience().stream()
-                .anyMatch(rel -> rel.getExperience().getId().equals(experienceId));
+        DoctorExperienceRelationship relationship = doctorProfile.getPracticeExperience().stream()
+                .filter(rel -> rel.getExperience().getId().equals(experienceId))
+                .findFirst()
+                .orElseThrow(() -> new AppException(ErrorCode.PRACTICE_EXPERIENCE_NOT_OWNED));
 
-        if (!isOwned) {
-            throw new AppException(ErrorCode.PRACTICE_EXPERIENCE_NOT_OWNED);
-        }
+        // Capture before state for CDC
+        Map<String, Object> beforeState = cdcMapper.toExperienceMap(relationship);
 
         practiceExperienceMapper.updatePracticeExperience(experience, request);
         experience = practiceExperienceRepository.save(experience);
+
+        // Capture after state for CDC
+        Map<String, Object> afterState = cdcMapper.toExperienceMap(relationship);
+
+        // Publish CDC event for experience update
+        cdcProducer.publishUpdate(
+                DoctorProfileEntityType.EXPERIENCE, beforeState, afterState, doctorProfile.getId(), userId);
 
         log.info("Doctor {} updated practice experience {}", userId, experienceId);
         return practiceExperienceMapper.toPracticeExperienceResponse(experience);
@@ -99,10 +116,16 @@ public class PracticeExperienceService {
                 .findFirst()
                 .orElseThrow(() -> new AppException(ErrorCode.PRACTICE_EXPERIENCE_NOT_OWNED));
 
+        // Capture before state for CDC
+        Map<String, Object> beforeState = cdcMapper.toExperienceMap(relationshipToRemove);
+
         doctorProfile.getPracticeExperience().remove(relationshipToRemove);
         doctorProfileRepository.save(doctorProfile);
 
         practiceExperienceRepository.deleteById(experienceId);
+
+        // Publish CDC event for experience deletion
+        cdcProducer.publishDelete(DoctorProfileEntityType.EXPERIENCE, beforeState, doctorProfile.getId(), userId);
 
         log.info("Doctor {} deleted practice experience {}", userId, experienceId);
     }
@@ -134,8 +157,18 @@ public class PracticeExperienceService {
                 .findFirst()
                 .orElseThrow(() -> new AppException(ErrorCode.PRACTICE_EXPERIENCE_NOT_OWNED));
 
+        // Capture before state for CDC
+        Map<String, Object> beforeState = cdcMapper.toExperienceMap(relationship);
+
         relationship.setIsHighlighted(isHighlighted);
-        doctorProfileRepository.save(doctorProfile);
+        doctorProfile = doctorProfileRepository.save(doctorProfile);
+
+        // Capture after state for CDC
+        Map<String, Object> afterState = cdcMapper.toExperienceMap(relationship);
+
+        // Publish CDC event for experience metadata update
+        cdcProducer.publishUpdate(
+                DoctorProfileEntityType.EXPERIENCE, beforeState, afterState, doctorProfile.getId(), userId);
 
         log.info(
                 "Doctor {} {} practice experience {}",

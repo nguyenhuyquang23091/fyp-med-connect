@@ -2,6 +2,7 @@ package com.fyp.profile_service.controller;
 
 import java.util.List;
 
+import com.fyp.profile_service.dto.request.*;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -9,10 +10,6 @@ import jakarta.validation.constraints.NotNull;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import com.fyp.profile_service.dto.request.ApiResponse;
-import com.fyp.profile_service.dto.request.DoctorExperienceUpdateRequest;
-import com.fyp.profile_service.dto.request.DoctorServiceRequest;
-import com.fyp.profile_service.dto.request.DoctorSpecialtyRequest;
 import com.fyp.profile_service.dto.response.DoctorExperienceResponse;
 import com.fyp.profile_service.dto.response.DoctorProfileResponse;
 import com.fyp.profile_service.dto.response.DoctorServiceResponse;
@@ -33,6 +30,11 @@ import lombok.extern.slf4j.Slf4j;
 public class DoctorProfileController {
 
     DoctorProfileService doctorProfileService;
+
+    @PutMapping("/baseProfile")
+    public ApiResponse<DoctorProfileResponse> updateMyBaseDoctorProfile(@Valid @RequestBody DoctorProfileUpdateRequest doctorProfileUpdateRequest){
+        return ApiResponse.<DoctorProfileResponse>builder().result(doctorProfileService.updateBaseDoctorProfile(doctorProfileUpdateRequest)).build();
+    }
 
     @GetMapping("/services")
     public ApiResponse<List<DoctorServiceResponse>> getMyServices() {

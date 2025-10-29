@@ -1,7 +1,12 @@
 package com.fyp.profile_service.listener;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
+import com.fyp.event.dto.DoctorProfileEntityType;
+import com.fyp.profile_service.mapper.DoctorProfileCdcMapper;
+import com.fyp.profile_service.mapper.DoctorProfileMapper;
+import com.fyp.profile_service.service.DoctorProfileCdcProducer;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +32,9 @@ public class UserRoleUpdateListener {
 
     UserProfileRepository userProfileRepository;
     DoctorProfileRepository doctorProfileRepository;
+
+    DoctorProfileCdcProducer cdcProducer;
+    DoctorProfileCdcMapper cdcMapper;
 
     private static final String DOCTOR_ROLE = "DOCTOR";
 
@@ -70,6 +78,7 @@ public class UserRoleUpdateListener {
             log.info("DoctorProfile already exists for userId: {}, skipping creation", userId);
             return;
         }
+
         DoctorProfile doctorProfile = DoctorProfile.builder()
                 .userId(userId)
                 .isAvailable(false) // Default to not available until doctor completes profile
@@ -85,6 +94,8 @@ public class UserRoleUpdateListener {
         userProfile.setDoctorProfile(doctorProfile);
         userProfileRepository.save(userProfile);
 
+        Map<String, Object> afterState = cdcMapper.toProfileMap(doctorProfile);
+        cdcProducer.publishCreate(DoctorProfileEntityType.PROFILE, afterState, doctorProfile.getId(), doctorProfile.getUserId());
         log.info("Successfully created and linked DoctorProfile for user: {}", userId);
     }
 
@@ -105,8 +116,7 @@ public class UserRoleUpdateListener {
                 userProfileRepository.save(userProfile);
             });
 
-            // Option 3: Delete DoctorProfile entirely (use with caution - loses historical data)
-            // doctorProfileRepository.delete(doctorProfile);
+
         });
     }
 }
