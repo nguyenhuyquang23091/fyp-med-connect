@@ -3,6 +3,7 @@ package com.fyp.profile_service.listener;
 import java.time.LocalDateTime;
 
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,7 +29,11 @@ public class UserRoleUpdateListener {
     UserProfileRepository userProfileRepository;
     DoctorProfileRepository doctorProfileRepository;
 
+
     private static final String DOCTOR_ROLE = "DOCTOR";
+
+    KafkaTemplate<String, Object> kafkaTemplate;
+
 
     @KafkaListener(topics = "user-role-updated", groupId = "profile-service-group")
     @Transactional
@@ -84,6 +89,7 @@ public class UserRoleUpdateListener {
 
         userProfile.setDoctorProfile(doctorProfile);
         userProfileRepository.save(userProfile);
+
 
         log.info("Successfully created and linked DoctorProfile for user: {}", userId);
     }

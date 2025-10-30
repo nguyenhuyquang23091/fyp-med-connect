@@ -12,6 +12,7 @@ import java.util.Map;
 @Mapper(componentModel = "spring")
 public interface DoctorProfileCdcMapper {
 
+
     //Convert CDC event data for indexing From a Map<Strinng, Object> data to a DoctorProfileENtity
     @Mapping(target = "doctorProfileId", expression = "java(toString(cdcData.get(\"profileId\")))")
     @Mapping(target = "userId", expression = "java(toString(cdcData.get(\"userId\")))")

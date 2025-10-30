@@ -1,0 +1,75 @@
+{
+  "properties": {
+    "residency": {
+      "type": "text",
+      "fields": {
+        "keyword": {
+          "type": "keyword"
+        }
+      }
+    },
+    "bio": {
+      "type": "text"
+    },
+    "services": {
+      "type": "nested",
+      "properties": {
+        "relationshipId": { "type": "long" },
+        "serviceId": { "type": "long" },
+        "serviceName": {
+          "type": "text",
+          "fields": {
+            "keyword": { "type": "keyword" }
+          }
+        },
+        "price": { "type": "scaled_float", "scaling_factor": 100 },
+        "currency": { "type": "keyword" }
+      }
+    },
+    "specialties": {
+      "type": "nested",
+      "properties": {
+        "relationshipId": { "type": "long" },
+        "specialtyId": { "type": "long" },
+        "specialtyName": {
+          "type": "text",
+          "fields": {
+            "keyword": { "type": "keyword" }
+          }
+        },
+        "specialtyCode": { "type": "keyword" },
+        "isPrimary": { "type": "boolean" },
+        "yearsOfExperienceInSpecialty": { "type": "integer" }
+      }
+    },
+    "experiences": {
+      "type": "nested",
+      "properties": {
+        "relationshipId": { "type": "long" },
+        "hospitalName": {
+          "type": "text",
+          "fields": {
+            "keyword": { "type": "keyword" }
+          }
+        },
+        "position": {
+          "type": "text",
+          "fields": {
+            "keyword": { "type": "keyword" }
+          }
+        },
+        "location": { "type": "text" },
+        "country": { "type": "keyword" },
+        "startDate": { "type": "date" },
+        "endDate": { "type": "date" },
+        "isCurrent": { "type": "boolean" }
+      }
+    },
+    "languages": {
+      "type": "keyword"
+    },
+    "isAvailable": {
+      "type": "boolean"
+    }
+  }
+}

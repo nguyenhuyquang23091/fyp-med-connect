@@ -1,17 +1,13 @@
-package com.fyp.rag_chat_bot.dto.response;
-
+package com.fyp.search_service.dto.request;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ChatBotResponse {
-    String conversationId;
-    String content;
-
+public class SearchFilter {
+    String term;
 }
