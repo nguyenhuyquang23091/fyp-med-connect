@@ -1,31 +1,22 @@
-package com.fyp.search_service.entity;
+package com.fyp.search_service.dto.response;
+
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.elasticsearch.annotations.Document;
-import org.springframework.data.elasticsearch.annotations.Field;
-import org.springframework.data.elasticsearch.annotations.FieldType;
-import org.springframework.data.elasticsearch.annotations.Mapping;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
-
-@Getter
-@Setter
-@Builder
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Document(indexName = "doctor_profiles")
-@Mapping(mappingPath = "static/doctor-profile.json")
-public class DoctorProfile {
-    @Id
+public class DoctorProfileResponse {
     String doctorProfileId;
     String userId;
+    //thiếu doctorFullName + Email
 
     // Basic doctor information
     String residency;
@@ -34,28 +25,20 @@ public class DoctorProfile {
     Boolean isAvailable;
     List<String> languages;
 
+    // Nested objects
+    List<ServiceResponse> services;
+    List<SpecialtyResponse> specialties;
+    List<ExperienceResponse> experiences;
 
-    // Nested objects for relationships
-    @Field(type = FieldType.Nested)
-    @Builder.Default
-    List<ServiceInfo> services = new ArrayList<>();
-
-    @Field(type = FieldType.Nested)
-    @Builder.Default
-    List<SpecialtyInfo> specialties = new ArrayList<>();
-
-    @Field(type = FieldType.Nested)
-    @Builder.Default
-    List<ExperienceInfo> experiences = new ArrayList<>();
-
-
-    @Getter
-    @Setter
-    @Builder
+    /**
+     * Service information response DTO
+     */
+    @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    @Builder
     @FieldDefaults(level = AccessLevel.PRIVATE)
-    public static class ServiceInfo {
+    public static class ServiceResponse {
         Long relationshipId;
         Long serviceId;
         String serviceName;
@@ -64,13 +47,15 @@ public class DoctorProfile {
         Integer displayOrder;
     }
 
-    @Getter
-    @Setter
-    @Builder
+    /**
+     * Specialty information response DTO
+     */
+    @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    @Builder
     @FieldDefaults(level = AccessLevel.PRIVATE)
-    public static class SpecialtyInfo {
+    public static class SpecialtyResponse {
         Long relationshipId;
         Long specialtyId;
         String specialtyName;
@@ -82,13 +67,15 @@ public class DoctorProfile {
         Integer yearsOfExperienceInSpecialty;
     }
 
-    @Getter
-    @Setter
-    @Builder
+    /**
+     * Experience information response DTO
+     */
+    @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    @Builder
     @FieldDefaults(level = AccessLevel.PRIVATE)
-    public static class ExperienceInfo {
+    public static class ExperienceResponse {
         Long relationshipId;
         String experienceId;
         String hospitalName;

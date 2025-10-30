@@ -8,6 +8,7 @@ import com.fyp.profile_service.mapper.DoctorProfileCdcMapper;
 import com.fyp.profile_service.mapper.DoctorProfileMapper;
 import com.fyp.profile_service.service.DoctorProfileCdcProducer;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,10 +34,15 @@ public class UserRoleUpdateListener {
     UserProfileRepository userProfileRepository;
     DoctorProfileRepository doctorProfileRepository;
 
+
     DoctorProfileCdcProducer cdcProducer;
     DoctorProfileCdcMapper cdcMapper;
 
+
     private static final String DOCTOR_ROLE = "DOCTOR";
+
+    KafkaTemplate<String, Object> kafkaTemplate;
+
 
     @KafkaListener(topics = "user-role-updated", groupId = "profile-service-group")
     @Transactional
@@ -94,8 +100,11 @@ public class UserRoleUpdateListener {
         userProfile.setDoctorProfile(doctorProfile);
         userProfileRepository.save(userProfile);
 
+
         Map<String, Object> afterState = cdcMapper.toProfileMap(doctorProfile);
         cdcProducer.publishCreate(DoctorProfileEntityType.PROFILE, afterState, doctorProfile.getId(), doctorProfile.getUserId());
+
+
         log.info("Successfully created and linked DoctorProfile for user: {}", userId);
     }
 
