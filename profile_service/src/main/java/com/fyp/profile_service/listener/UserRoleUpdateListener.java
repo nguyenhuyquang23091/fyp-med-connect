@@ -99,11 +99,13 @@ public class UserRoleUpdateListener {
 
         userProfile.setDoctorProfile(doctorProfile);
         userProfileRepository.save(userProfile);
-
-
         Map<String, Object> afterState = cdcMapper.toProfileMap(doctorProfile);
-        cdcProducer.publishCreate(DoctorProfileEntityType.PROFILE, afterState, doctorProfile.getId(), doctorProfile.getUserId());
 
+        afterState.put("fullName", userProfile.getFirstName() + " " + userProfile.getLastName());
+        afterState.put("email", userProfile.getEmail());
+        afterState.put("avatar", userProfile.getAvatar());
+
+        cdcProducer.publishCreate(DoctorProfileEntityType.PROFILE, afterState, doctorProfile.getId(), doctorProfile.getUserId());
 
         log.info("Successfully created and linked DoctorProfile for user: {}", userId);
     }

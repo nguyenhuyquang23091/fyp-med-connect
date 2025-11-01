@@ -1,7 +1,12 @@
 package com.fyp.search_service.service;
 
+import com.fyp.search_service.dto.response.DoctorProfileResponse;
+import com.fyp.search_service.dto.response.PageResponse;
 import com.fyp.search_service.entity.DoctorProfile;
+import com.fyp.search_service.exceptions.AppException;
+import com.fyp.search_service.exceptions.ErrorCode;
 import com.fyp.search_service.mapper.DoctorProfileCdcMapper;
+import com.fyp.search_service.mapper.DoctorProfileSearchMapper;
 import com.fyp.search_service.repository.DoctorProfileSearchRepository;
 import com.fyp.search_service.service.base.NestedEntityHandler;
 import jakarta.annotation.PostConstruct;
@@ -9,10 +14,17 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import javax.print.Doc;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static com.fyp.search_service.constant.PredefinedType.*;
 
@@ -25,6 +37,8 @@ public class DoctorProfileSearchService {
     DoctorProfileSearchRepository doctorProfileRepository;
     DoctorProfileCdcMapper doctorProfileCdcMapper;
     Map<String, NestedEntityHandler<?>> entityHandlers = new HashMap<>();
+    DoctorProfileSearchMapper doctorProfileSearchMapper;
+
 
     @PostConstruct
     private void init() {
@@ -41,7 +55,6 @@ public class DoctorProfileSearchService {
             log.debug("Processing doctor profile CDC event - operation: {}, entityType: {}, profileId: {}",
                     operation, entityType, doctorProfileId);
 
-
             // Handle base PROFILE entity type separately (not a nested entity)
             if (PROFILE.equals(entityType)) {
                 handleProfileEvent(operation, beforeData, afterData, doctorProfileId, userId);
@@ -53,12 +66,19 @@ public class DoctorProfileSearchService {
             if (handler != null) {
                 handleEvent(handler, operation, beforeData, afterData, doctorProfileId, userId);
             } else {
-                log.warn("Unknown entity type: {}", entityType);
+                // Reason: Unknown entity types indicate invalid CDC events or misconfiguration
+                log.error("Unknown entity type received: {}", entityType);
+                throw new AppException(ErrorCode.CDC_INVALID_ENTITY_TYPE);
             }
 
+        } catch (AppException e) {
+            // Reason: Re-throw AppExceptions to preserve error context
+            throw e;
         } catch (Exception e) {
+            // Reason: Wrap unexpected exceptions in CDC processing error
             log.error("Error processing doctor profile CDC event - profileId: {}, entityType: {}, operation: {}",
                     doctorProfileId, entityType, operation, e);
+            throw new AppException(ErrorCode.CDC_EVENT_PROCESSING_ERROR);
         }
     }
 
@@ -106,7 +126,6 @@ public class DoctorProfileSearchService {
             log.warn("Cannot update non-existent doctor profile - profileId: {}", doctorProfileId);
         });
     }
-
 
     private void deleteProfile(String doctorProfileId) {
         doctorProfileRepository.deleteById(doctorProfileId);
@@ -171,6 +190,24 @@ public class DoctorProfileSearchService {
         protected Long getRelationshipId(DoctorProfile.ExperienceInfo entity) {
             return entity.getRelationshipId();
         }
+    }
+
+    public PageResponse<DoctorProfileResponse> findAllDoctorProfile(int page, int size ){
+        Pageable pageable = PageRequest.of(page - 1 , size);
+
+        Page<DoctorProfile> doctorProfiles = doctorProfileRepository.findAll(pageable);
+
+        List<DoctorProfileResponse> doctorProfileResponses =
+                doctorProfiles.getContent().stream().map(doctorProfileSearchMapper::toDoctorProfileResponse).toList();
+
+        return  PageResponse.<DoctorProfileResponse>builder()
+                .currentPage(doctorProfiles.getNumber())
+                .pageSize(doctorProfiles.getSize())
+                .totalPages(doctorProfiles.getTotalPages())
+                .totalElements(doctorProfiles.getTotalElements())
+                .data(doctorProfileResponses)
+                .build();
+
     }
 
 }

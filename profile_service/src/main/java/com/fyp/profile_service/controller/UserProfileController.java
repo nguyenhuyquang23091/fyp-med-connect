@@ -48,12 +48,7 @@ public class UserProfileController {
         userProfileService.deleteProfile(profileId);
     }
 
-    //    @GetMapping("/users/get-all-doctors")
-    //    public ApiResponse<List<UserProfileResponse>> getAllDoctorProfile() {
-    //        return ApiResponse.<List<UserProfileResponse>>builder()
-    //                .result(userProfileService.getAllDoctorProfile())
-    //                .build();
-    //    }
+
 
     // doctor api
     @GetMapping("/users/get-all-patients")

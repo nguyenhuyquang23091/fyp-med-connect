@@ -39,70 +39,69 @@ public class KafkaCdcEventListener {
     //1 retry in main topic +  3 retry topics
     @RetryableTopic(attempts = "4",
             backoff = @Backoff(delay = 1000, multiplier = 2, maxDelay = 30000)
-            ,dltStrategy = DltStrategy.FAIL_ON_ERROR, //this means no_retry on DLT topic
+            ,dltStrategy = DltStrategy.FAIL_ON_ERROR,
             autoCreateTopics = "true"
     )
     @KafkaListener(topics = "cdc.authservice.public.users", groupId = "search-service-cdc-group")
     public void handleUserEventListener(DebeziumPayload payload)  {
+        String operation = payload.getOperation();
 
-                String operation = payload.getOperation();
+        log.debug("Processing user CDC event - operation: {}, timestamp: {}", operation, payload.getTimestamp());
 
-                log.debug("Processing user CDC event - operation: {}, timestamp: {}", operation, payload.getTimestamp());
-
-                switch (operation) {
-                    case "c", "r", "u":
-                        if (payload.getAfter() != null) {
-                            userSearchService.saveUser(payload.getAfter());
-                        } else {
-                            log.warn("Received {} operation but 'after' is null", operation);
-                        }
-                        break;
-                    case "d":
-                        if (payload.getBefore() != null) {
-                            String userId = payload.getBefore().get("id").toString();
-                            userSearchService.deleteUser(userId);
-                        } else {
-                            log.warn("Received delete operation but 'before' is null");
-                        }
-                        break;
-                    default:
-                       log.info("Unknown operation type {}", operation);
+        // Reason: Throw exceptions to trigger Kafka retry mechanism for transient failures
+        switch (operation) {
+            case "c", "r", "u":
+                if (payload.getAfter() != null) {
+                    userSearchService.saveUser(payload.getAfter());
+                } else {
+                    log.warn("Received {} operation but 'after' is null", operation);
                 }
-
+                break;
+            case "d":
+                if (payload.getBefore() != null) {
+                    String userId = payload.getBefore().get("id").toString();
+                    userSearchService.deleteUser(userId);
+                } else {
+                    log.warn("Received delete operation but 'before' is null");
+                }
+                break;
+            default:
+                log.warn("Unknown operation type {} for user CDC event", operation);
+        }
     }
 
     @RetryableTopic(attempts = "4",
             backoff = @Backoff(delay = 1000, multiplier = 2, maxDelay = 30000)
-            ,dltStrategy = DltStrategy.FAIL_ON_ERROR, //this means no_retry on DLT topic
+            ,dltStrategy = DltStrategy.FAIL_ON_ERROR,
             autoCreateTopics = "true"
     )
     @KafkaListener(topics = "cdc.appointmentservice.public.appointments", groupId = "search-service-cdc-group")
     public void handleAppointmentEventListener(DebeziumPayload payload) {
+        String operation = payload.getOperation();
 
-            String operation = payload.getOperation();
+        log.debug("Processing appointment CDC event - operation: {}, timestamp: {}", operation, payload.getTimestamp());
 
-            log.debug("Processing appointment CDC event - operation: {}, timestamp: {}", operation, payload.getTimestamp());
+        // Reason: Throw exceptions to trigger Kafka retry mechanism for transient failures
+        switch (operation) {
+            case "c", "r", "u":
+                if (payload.getAfter() != null) {
+                    appointmentSearchService.saveAppointment(payload.getAfter());
+                } else {
+                    log.warn("Received {} operation but 'after' is null", operation);
+                }
+                break;
 
-            switch (operation) {
-                case "c", "r", "u":
-                    if (payload.getAfter() != null) {
-                        appointmentSearchService.saveAppointment(payload.getAfter());
-                    } else {
-                        log.warn("Received {} operation but 'after' is null", operation);
-                    }
-                    break;
-
-                case "d":
-                    if (payload.getBefore() != null) {
-                        String appointmentId = payload.getBefore().get("id").toString();
-                        appointmentSearchService.deleteAppointment(appointmentId);
-                    } else {
-                        log.warn("Received delete operation but 'before' is null");
-                    }
-                    break;
-                default:
-                    log.info("Unknown appointment operation {}", operation);
-            }
+            case "d":
+                if (payload.getBefore() != null) {
+                    String appointmentId = payload.getBefore().get("id").toString();
+                    appointmentSearchService.deleteAppointment(appointmentId);
+                } else {
+                    log.warn("Received delete operation but 'before' is null");
+                }
+                break;
+            default:
+                log.warn("Unknown appointment operation type: {}", operation);
+        }
     }
 
     @RetryableTopic(attempts = "4",

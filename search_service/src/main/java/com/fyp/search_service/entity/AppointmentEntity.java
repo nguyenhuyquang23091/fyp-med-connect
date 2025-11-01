@@ -1,6 +1,7 @@
 package com.fyp.search_service.entity;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.annotation.Id;
@@ -16,6 +17,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Document(indexName = "appointment")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class AppointmentEntity {
     @Id
     String id;

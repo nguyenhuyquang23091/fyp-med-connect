@@ -13,7 +13,6 @@ import com.fyp.appointment_service.exceptions.ErrorCode;
 import com.fyp.appointment_service.repository.httpCLient.ProfileClient;
 import com.fyp.appointment_service.repository.httpCLient.VnPayClient;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -91,6 +90,8 @@ public class AppointmentService {
 
         PaymentResponse paymentResponse = vnPayClient.createVnPayment(paymentRequest).getResult();
 
+
+
         String paymentUrl  = paymentResponse.getPaymentUrl();
         AppointmentResponse appointmentResponse =  appointmentMapper.toAppointmentRespone(appointmentEntity);
         appointmentResponse.setPaymentURL(paymentUrl);
@@ -98,10 +99,7 @@ public class AppointmentService {
         return  appointmentResponse;
     }
 
-    @PreAuthorize("hasRole('ADMIN') or hasAuthority('VIEW_DOCTOR_PROFILES')")
-    public List<DoctorProfileResponse> getAllDoctorProfile(){
-        return profileClient.getAllAvailableDoctor().getResult();
-    }
+
 
     public AppointmentResponse cancelMyAppointment(){
         var authentication = SecurityContextHolder.getContext().getAuthentication();

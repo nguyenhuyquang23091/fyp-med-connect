@@ -19,6 +19,11 @@ public interface DoctorProfileCdcMapper {
     @Mapping(target = "residency", expression = "java(toString(cdcData.get(\"residency\")))")
     @Mapping(target = "yearsOfExperience", expression = "java(toInteger(cdcData.get(\"yearsOfExperience\")))")
     @Mapping(target = "bio", expression = "java(toString(cdcData.get(\"bio\")))")
+    @Mapping(target = "fullName", expression = "java(toString(cdcData.get(\"fullName\")))")
+    @Mapping(target = "avatar", expression = "java(toString(cdcData.get(\"avatar\")))")
+    @Mapping(target = "email", expression = "java(toString(cdcData.get(\"email\")))")
+
+
     @Mapping(target = "isAvailable", expression = "java(toBoolean(cdcData.get(\"isAvailable\")))")
     @Mapping(target = "languages", ignore = true)
     @Mapping(target = "services", ignore = true)

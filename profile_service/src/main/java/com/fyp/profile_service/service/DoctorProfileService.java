@@ -91,8 +91,6 @@ public class DoctorProfileService {
         return doctorProfileMapper.toResponse(doctorProfile, basicUserProfile);
 
 
-
-
     }
 
 
@@ -385,7 +383,7 @@ public class DoctorProfileService {
         return doctorProfileMapper.toResponse(doctorProfile, basicUserProfile);
     }
 
-    @PreAuthorize("hasAuthority('VIEW_DOCTOR_PROFILES')")
+    @PreAuthorize("hasRole('ADMIN')")
     public List<DoctorProfileResponse> getAllDoctorProfile() {
 
         List<DoctorProfile> doctorProfiles = doctorProfileRepository.findAll();

@@ -16,9 +16,13 @@ import java.util.List;
 public class DoctorProfileResponse {
     String doctorProfileId;
     String userId;
-    //thiếu doctorFullName + Email
+
+
 
     // Basic doctor information
+
+    String fullName;
+    String email;
     String residency;
     Integer yearsOfExperience;
     String bio;
@@ -30,9 +34,7 @@ public class DoctorProfileResponse {
     List<SpecialtyResponse> specialties;
     List<ExperienceResponse> experiences;
 
-    /**
-     * Service information response DTO
-     */
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -47,9 +49,7 @@ public class DoctorProfileResponse {
         Integer displayOrder;
     }
 
-    /**
-     * Specialty information response DTO
-     */
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -67,9 +67,7 @@ public class DoctorProfileResponse {
         Integer yearsOfExperienceInSpecialty;
     }
 
-    /**
-     * Experience information response DTO
-     */
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor

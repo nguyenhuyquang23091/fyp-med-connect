@@ -1,5 +1,6 @@
 package com.fyp.search_service.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.annotation.Id;
@@ -22,10 +23,13 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Document(indexName = "doctor_profiles")
 @Mapping(mappingPath = "static/doctor-profile.json")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class DoctorProfile {
     @Id
     String doctorProfileId;
     String userId;
+
+
 
     // Basic doctor information
     String residency;
@@ -33,6 +37,9 @@ public class DoctorProfile {
     String bio;
     Boolean isAvailable;
     List<String> languages;
+    String fullName;
+    String email;
+    String avatar;
 
 
     // Nested objects for relationships

@@ -1,5 +1,7 @@
 package com.fyp.search_service.constant;
 
+import java.util.List;
+
 public class PredefinedType {
 
     //CDC EVENT Entity Type
@@ -14,7 +16,10 @@ public class PredefinedType {
     public static final String DISPLAY_EXPERIENCE = "Experience";
     public static final String DISPLAY_PROFILE = "Profile";
 
-
+    public static final List<String> DEFAULT_SEARCH_FIELDS =
+            List.of(
+                    "residency", "specialtyName", "hospitalName", "serviceName", "fullName"
+ );
 
 
     private PredefinedType(){

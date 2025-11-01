@@ -15,6 +15,7 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Mapping;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -31,6 +32,8 @@ public class IndexService {
     ElasticsearchClient elasticsearchClient;
     ResourceLoader resourceLoader;
 
+
+    @PreAuthorize("hasRole('ADMIN')")
     public void createIndices(){
         List<IndexInfo> indexInformation = getIndexInformation();
         if(CollectionUtils.isEmpty(indexInformation)){
@@ -47,13 +50,12 @@ public class IndexService {
 
         try {
             if(indexInfo.mappingPath() != null){
-
-                elasticsearchClient.indices().create(c -> c.index(indexInfo.name())
-                        .mappings(t -> t.withJson(getMappings(indexInfo.mappingPath()))));
+                // Use withJson to load the entire index definition (settings + mappings)
+                elasticsearchClient.indices().create(c -> c
+                        .index(indexInfo.name())
+                        .withJson(getMappings(indexInfo.mappingPath())));
             } else {
-
-                    elasticsearchClient.indices().create(c -> c.index(indexInfo.name()));
-
+                elasticsearchClient.indices().create(c -> c.index(indexInfo.name()));
             }
 
         } catch (IOException e) {
