@@ -1,0 +1,29 @@
+package com.fyp.search_service.dto.response;
+
+import com.fyp.search_service.constant.SuggestionType;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class SearchSuggestion {
+
+    String text;
+
+    SuggestionType type;
+
+    Integer matchCount;
+
+
+    Float score;
+
+    String entityId;
+
+    String description;
+
+
+}

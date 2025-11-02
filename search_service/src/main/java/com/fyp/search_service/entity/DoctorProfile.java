@@ -84,7 +84,9 @@ public class DoctorProfile {
         String specialtyCode;
         String specialtyDescription;
         Boolean isPrimary;
-        LocalDate certificationDate;
+
+        String certificationDate;
+
         String certificationBody;
         Integer yearsOfExperienceInSpecialty;
     }
@@ -104,8 +106,10 @@ public class DoctorProfile {
         String location;
         String country;
         String position;
-        LocalDate startDate;
-        LocalDate endDate;
+
+        String startDate;
+        String endDate;
+
         Boolean isCurrent;
         String description;
         Integer displayOrder;

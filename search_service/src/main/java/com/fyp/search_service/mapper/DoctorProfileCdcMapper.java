@@ -46,7 +46,7 @@ public interface DoctorProfileCdcMapper {
     @Mapping(target = "specialtyCode", expression = "java(toString(cdcData.get(\"specialtyCode\")))")
     @Mapping(target = "specialtyDescription", expression = "java(toString(cdcData.get(\"specialtyDescription\")))")
     @Mapping(target = "isPrimary", expression = "java(toBoolean(cdcData.get(\"isPrimary\")))")
-    @Mapping(target = "certificationDate", expression = "java(toLocalDate(cdcData.get(\"certificationDate\")))")
+    @Mapping(target = "certificationDate", expression = "java(toDateString(cdcData.get(\"certificationDate\")))")
     @Mapping(target = "certificationBody", expression = "java(toString(cdcData.get(\"certificationBody\")))")
     @Mapping(target = "yearsOfExperienceInSpecialty", expression = "java(toInteger(cdcData.get(\"yearsOfExperienceInSpecialty\")))")
     DoctorProfile.SpecialtyInfo toSpecialtyInfo(Map<String, Object> cdcData);
@@ -60,8 +60,8 @@ public interface DoctorProfileCdcMapper {
     @Mapping(target = "location", expression = "java(toString(cdcData.get(\"location\")))")
     @Mapping(target = "country", expression = "java(toString(cdcData.get(\"country\")))")
     @Mapping(target = "position", expression = "java(toString(cdcData.get(\"position\")))")
-    @Mapping(target = "startDate", expression = "java(toLocalDate(cdcData.get(\"startDate\")))")
-    @Mapping(target = "endDate", expression = "java(toLocalDate(cdcData.get(\"endDate\")))")
+    @Mapping(target = "startDate", expression = "java(toDateString(cdcData.get(\"startDate\")))")
+    @Mapping(target = "endDate", expression = "java(toDateString(cdcData.get(\"endDate\")))")
     @Mapping(target = "isCurrent", expression = "java(toBoolean(cdcData.get(\"isCurrent\")))")
     @Mapping(target = "description", expression = "java(toString(cdcData.get(\"description\")))")
     @Mapping(target = "displayOrder", expression = "java(toInteger(cdcData.get(\"displayOrder\")))")
@@ -125,17 +125,19 @@ public interface DoctorProfileCdcMapper {
         return null;
     }
 
-    default LocalDate toLocalDate(Object obj) {
+    default String toDateString(Object obj) {
         if (obj == null) return null;
-        if (obj instanceof LocalDate) return (LocalDate) obj;
-        if (obj instanceof String) {
-            try {
-                return LocalDate.parse((String) obj);
-            } catch (Exception e) {
-                return null;
-            }
+        if (obj instanceof LocalDate) return obj.toString();
+        if (obj instanceof String) return (String) obj;
+        if (obj instanceof Number) {
+            // Handle epoch millis
+            long epochMilli = ((Number) obj).longValue();
+            return java.time.Instant.ofEpochMilli(epochMilli)
+                    .atZone(java.time.ZoneId.systemDefault())
+                    .toLocalDate()
+                    .toString();
         }
-        return null;
+        return obj.toString();
     }
 }
 

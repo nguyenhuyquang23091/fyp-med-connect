@@ -41,7 +41,6 @@ public class UserRoleUpdateListener {
 
     private static final String DOCTOR_ROLE = "DOCTOR";
 
-    KafkaTemplate<String, Object> kafkaTemplate;
 
 
     @KafkaListener(topics = "user-role-updated", groupId = "profile-service-group")

@@ -112,7 +112,6 @@ public class KafkaCdcEventListener {
     @KafkaListener(topics = "cdc.profileservice.doctor_profile_relationships", groupId = "search-service-cdc-group")
     public void handleDoctorProfileEventListener(DoctorProfileCdcEvent event){
 
-
             DoctorProfileCDCPayload doctorProfileCDCPayload = event.getPayload();
             if (doctorProfileCDCPayload == null) {
                 log.warn("Received doctor profile event with null payload.");

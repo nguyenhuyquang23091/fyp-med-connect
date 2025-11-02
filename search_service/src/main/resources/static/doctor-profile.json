@@ -69,6 +69,13 @@
           }
         }
       },
+      "email": {
+        "type": "keyword"
+      },
+      "avatar": {
+        "type": "keyword",
+        "index": false
+      },
 
       "yearsOfExperience": {
         "type": "integer"

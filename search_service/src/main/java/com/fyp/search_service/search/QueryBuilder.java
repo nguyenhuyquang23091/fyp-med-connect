@@ -26,7 +26,7 @@ public final class QueryBuilder {
     public static SearchRequest buildDoctorSearch(SearchFilter searchFilter) {
         BoolQuery.Builder boolQuery = new BoolQuery.Builder();
 
-        addAutoCompleteQueries(boolQuery, searchFilter);
+        addFuzzyTextSearch(boolQuery , searchFilter.getTerm());
         addBooleanFilters(boolQuery, searchFilter);
         addRangeFilter(boolQuery, searchFilter);
 
@@ -37,8 +37,6 @@ public final class QueryBuilder {
         SearchRequest.Builder builder = new SearchRequest.Builder();
         builder.index("doctor_profiles");
 
-        // Build and set the query
-        //Build Fuzzy queries
 
         Query query = Query.of(q -> q.bool(boolQuery.build()));
         builder.query(query);
@@ -57,8 +55,8 @@ public final class QueryBuilder {
         return builder.build();
     }
 
-    private static void addAutoCompleteQueries(BoolQuery.Builder boolQuery, SearchFilter searchFilter) {
-        if (searchFilter.getTerm() == null || searchFilter.getTerm().isBlank()) {
+    private static void addFuzzyTextSearch(BoolQuery.Builder boolQuery, String term) {
+        if (term== null || term.isBlank()) {
             return;
         }
 
@@ -66,7 +64,7 @@ public final class QueryBuilder {
         boolQuery.should(s -> s
                 .match(m -> m
                         .field("residency")
-                        .query(searchFilter.getTerm())
+                        .query(term)
                         .fuzziness("AUTO")
                         .prefixLength(2)
                         .boost(1.5f)
@@ -76,7 +74,7 @@ public final class QueryBuilder {
         boolQuery.should(s -> s
                 .match(m -> m
                         .field("fullName")
-                        .query(searchFilter.getTerm())
+                        .query(term)
                         .fuzziness("AUTO")
                         .prefixLength(1)
                         .boost(2.0f)
@@ -90,7 +88,7 @@ public final class QueryBuilder {
                         .query(q -> q
                                 .match(m -> m
                                         .field("specialties.specialtyName")
-                                        .query(searchFilter.getTerm())
+                                        .query(term)
                                         .fuzziness("AUTO")
                                         .prefixLength(2)
                                         .boost(1.5f)
@@ -107,7 +105,7 @@ public final class QueryBuilder {
                         .query(q -> q
                                 .match(m -> m
                                         .field("experiences.hospitalName")
-                                        .query(searchFilter.getTerm())
+                                        .query(term)
                                         .fuzziness("AUTO")
                                         .prefixLength(2)
                                         .boost(1.3f)
@@ -124,7 +122,7 @@ public final class QueryBuilder {
                         .query(q -> q
                                 .match(m -> m
                                         .field("services.serviceName")
-                                        .query(searchFilter.getTerm())
+                                        .query(term)
                                         .fuzziness("AUTO")
                                         .prefixLength(2)
                                         .boost(1.2f)
@@ -133,7 +131,6 @@ public final class QueryBuilder {
                         .scoreMode(ChildScoreMode.Max)
                 )
         );
-
 
     }
 
@@ -224,4 +221,30 @@ public final class QueryBuilder {
 
         return sortOptions;
     }
+
+    public static SearchRequest buildSuggestiveSearch(String term, int limit){
+        if(term == null){
+            throw new IllegalArgumentException("Search term must be at least 2 characters");
+        }
+
+        BoolQuery.Builder boolQuery = new BoolQuery.Builder();
+        addFuzzyTextSearch(boolQuery, term);
+
+        SearchRequest.Builder builder = new SearchRequest.Builder();
+        builder.index("doctor_profiles");
+        builder.query(Query.of(q -> q.bool(boolQuery.build())));
+        builder.size(Math.min(limit, 10));
+        builder.source(src -> src.filter(f -> f
+                        .includes("doctorProfileId", "fullName", "residency", "avatar",
+                                "specialties.specialtyName", "services.serviceName",
+                                "experiences.hospitalName")));
+        builder.sort(SortOptions.of(s -> s.score(sc -> sc.order(SortOrder.Desc))));
+
+        return  builder.build();
+
+
+    }
+
+
+
 }

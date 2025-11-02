@@ -23,9 +23,6 @@ public class SearchFilter {
     String term;
 
 
-    // Search fields configuration
-    //mot cai for loop o day
-
     @Builder.Default
     List<String> searchFields = PredefinedType.DEFAULT_SEARCH_FIELDS;
 

@@ -17,7 +17,6 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableMethodSecurity
 public class SecurityConfig {
     public String[] PUBLIC_ENDPOINT = {
-            "/create"
     };
 
     private final CustomJwtDecoder customJwtDecoder;

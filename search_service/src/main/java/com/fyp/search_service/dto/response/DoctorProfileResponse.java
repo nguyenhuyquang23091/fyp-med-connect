@@ -18,11 +18,10 @@ public class DoctorProfileResponse {
     String userId;
 
 
-
     // Basic doctor information
-
     String fullName;
     String email;
+    String avatar;
     String residency;
     Integer yearsOfExperience;
     String bio;
