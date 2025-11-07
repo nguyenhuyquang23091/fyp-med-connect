@@ -107,12 +107,16 @@ public class ElasticSearchProxy {
 
     private List<SearchSuggestion> extractSuggestionsFromHit(DoctorProfile doctor, Double score,
                                                                String term, Set<String> seenTexts) {
+
         if (doctor == null) return List.of();
 
         float normalizedScore = normalizeScore(score);
 
+        //revise this 2morrow
+        String fullName = doctor.getLastName() + doctor.getFirstName();
+
         return Stream.of(
-                createSuggestion(doctor.getFullName(), SuggestionType.DOCTOR_NAME, normalizedScore,
+                createSuggestion(fullName, SuggestionType.DOCTOR_NAME, normalizedScore,
                         doctor.getDoctorProfileId(), doctor.getResidency(), seenTexts),
 
                 createSuggestion(doctor.getResidency(), SuggestionType.RESIDENCY,

@@ -17,9 +17,9 @@ public class DoctorProfileResponse {
     String doctorProfileId;
     String userId;
 
-
     // Basic doctor information
-    String fullName;
+    String firstName;
+    String lastName;
     String email;
     String avatar;
     String residency;

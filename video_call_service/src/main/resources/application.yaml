@@ -1,0 +1,6 @@
+server:
+  port: 8095
+
+socket:
+  host: localhost
+  port: 9095

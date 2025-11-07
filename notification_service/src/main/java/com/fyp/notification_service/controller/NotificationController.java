@@ -28,14 +28,16 @@ public class NotificationController {
     @KafkaListener(topics = "notification-delivery")
     public void listenNotificationDelivery(NotificationEvent message){
         log.info("Message receiver : {}" , message);
-        
+
+
         // Send email notification only
         emailService.sendMail(SendEmailRequest.builder()
-                        .to(Recipient.builder()
-                                .email(message.getRecipient())
+                        .templateCode(message.getTemplateCode())
+                        .to(Recipient
+                                .builder()
+                                .name(message.getRecipientUserName())
+                                .email(message.getRecipientEmail())
                                 .build())
-                        .subject(message.getSubject())
-                        .htmlContent(message.getBody())
                 .build());
     }
 
@@ -50,7 +52,7 @@ public class NotificationController {
 
     @GetMapping("/my-notifications")
     public ApiResponse<PageResponse<NotificationResponse>> getAllNotification(
-            @RequestParam(value = "page", required = false, defaultValue = "0") int page,
+            @RequestParam(value = "page", required = false, defaultValue = "1") int page,
             @RequestParam(value = "size", required = false, defaultValue = "10") int size
     ){
         return ApiResponse.<PageResponse<NotificationResponse>>builder()

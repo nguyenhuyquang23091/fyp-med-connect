@@ -15,6 +15,9 @@ import org.springframework.data.elasticsearch.annotations.Document;
 @Document(indexName = "users")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class UserEntity {
+
+    //update to delete later, since we use debezium to capture event changes in authservice, we don't have information about their profile
+
     @Id
     String id;
     String fullName;

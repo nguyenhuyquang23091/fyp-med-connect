@@ -31,8 +31,9 @@ public class SearchServiceController {
 
  @PostMapping("/doctor")
  public ApiResponse<PageResponse<DoctorProfileResponse>> search( @RequestBody SearchFilter searchFilter){
-   log.info("Received doctor search request - term: {}, page: {}, size: {}",
-           searchFilter.getTerm(), searchFilter.getPage(), searchFilter.getSize());
+   log.info("Received doctor search request - term: {}, page: {}, size: {}, sortBy: {}, sortOrder: {}",
+           searchFilter.getTerm(), searchFilter.getPage(), searchFilter.getSize(),
+           searchFilter.getSortBy(), searchFilter.getSortOrder());
 
    PageResponse<DoctorProfileResponse> pageResponse = elasticSearchProxy.searchDoctorByTerm(searchFilter);
 

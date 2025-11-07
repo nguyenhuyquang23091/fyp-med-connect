@@ -11,7 +11,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class SendEmailRequest {
  Recipient to ;
- String subject;
- String htmlContent;
+ Long templateCode;
+
 
 }

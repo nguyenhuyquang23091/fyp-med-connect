@@ -18,4 +18,5 @@ public class DoctorSpecialtyResponse {
     LocalDate certificationDate;
     String certificationBody;
     Integer yearsOfExperienceInSpecialty;
+
 }

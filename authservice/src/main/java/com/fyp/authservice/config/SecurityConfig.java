@@ -25,7 +25,8 @@ public class SecurityConfig {
             "/auth/logout",
             "/auth/refresh",
             "/users/registration",
-            "/users/internal/**" // Internal endpoints for inter-service communication
+            "/users/internal/**" ,
+            "/actuator"// Internal endpoints for inter-service communication
     };
     @Value("${spring.jwt.singerKey}")
     private String signerKey;
@@ -39,6 +40,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/users").permitAll()
                         .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
                         .requestMatchers(HttpMethod.GET, "/users/internal/**").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
                         .anyRequest()
                         .authenticated());
         //disable csrf security

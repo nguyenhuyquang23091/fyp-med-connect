@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Socket.IO Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .log {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button:disabled {
+            background: #ccc;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .connected { background: #d4edda; color: #155724; }
+        .disconnected { background: #f8d7da; color: #721c24; }
+        .testing { background: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <h1>Simple Socket.IO Connection Test</h1>
+    
+    <div id="status" class="status disconnected">Status: Not connected</div>
+    
+    <button onclick="testConnection()">Test Connection</button>
+    <button onclick="clearLog()">Clear Log</button>
+    
+    <div class="log" id="log"></div>
+
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+    <script>
+        let socket = null;
+
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${time}] ${message}<br>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateStatus(status, className) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = `Status: ${status}`;
+            statusDiv.className = `status ${className}`;
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        function testConnection() {
+            updateStatus('Testing connection...', 'testing');
+            log('=== Starting Connection Test ===');
+            
+            // Test 1: Check if server is reachable via HTTP
+            log('Test 1: Checking HTTP accessibility...');
+            fetch('http://localhost:9094/socket.io/?EIO=4&transport=polling')
+                .then(response => {
+                    log(`✓ HTTP Response: ${response.status} ${response.statusText}`);
+                    return response.text();
+                })
+                .then(data => {
+                    log(`✓ Response data: ${data.substring(0, 100)}...`);
+                    startSocketConnection();
+                })
+                .catch(error => {
+                    log(`✗ HTTP Error: ${error.message}`);
+                    log('Server may not be running or CORS issue detected');
+                    
+                    // Try alternative approaches
+                    tryAlternativeConnection();
+                });
+        }
+
+        function startSocketConnection() {
+            log('Test 2: Attempting Socket.IO connection...');
+            
+            if (socket) {
+                socket.disconnect();
+            }
+
+            socket = io('http://localhost:9094', {
+                transports: ['polling', 'websocket'],
+                upgrade: true,
+                rememberUpgrade: false,
+                timeout: 5000,
+                forceNew: true
+            });
+
+            socket.on('connect', () => {
+                log(`✓ Socket.IO Connected! Session ID: ${socket.id}`);
+                updateStatus('Connected', 'connected');
+            });
+
+            socket.on('connect_error', (error) => {
+                log(`✗ Socket.IO Connection Error: ${error.message}`);
+                log(`Error type: ${error.type || 'unknown'}`);
+                updateStatus('Connection failed', 'disconnected');
+            });
+
+            socket.on('disconnect', (reason) => {
+                log(`✗ Disconnected: ${reason}`);
+                updateStatus('Disconnected', 'disconnected');
+            });
+
+            // Timeout after 10 seconds
+            setTimeout(() => {
+                if (!socket.connected) {
+                    log('✗ Connection timeout after 10 seconds');
+                    updateStatus('Connection timeout', 'disconnected');
+                }
+            }, 10000);
+        }
+
+        function tryAlternativeConnection() {
+            log('Test 3: Trying alternative configurations...');
+            
+            // Try with different transports
+            const configs = [
+                { transports: ['polling'], name: 'Polling only' },
+                { transports: ['websocket'], name: 'WebSocket only' },
+                { transports: ['polling', 'websocket'], upgrade: false, name: 'No upgrade' }
+            ];
+
+            configs.forEach((config, index) => {
+                setTimeout(() => {
+                    log(`Trying ${config.name}...`);
+                    const testSocket = io('http://localhost:9094', config);
+                    
+                    testSocket.on('connect', () => {
+                        log(`✓ ${config.name} worked! Session: ${testSocket.id}`);
+                        updateStatus('Connected', 'connected');
+                        socket = testSocket;
+                    });
+
+                    testSocket.on('connect_error', (error) => {
+                        log(`✗ ${config.name} failed: ${error.message}`);
+                        testSocket.disconnect();
+                    });
+
+                    // Cleanup after 5 seconds
+                    setTimeout(() => {
+                        if (!testSocket.connected) {
+                            testSocket.disconnect();
+                        }
+                    }, 5000);
+                }, index * 2000);
+            });
+        }
+
+        // Auto-start test
+        window.onload = () => {
+            log('Page loaded. Click "Test Connection" to start.');
+        };
+    </script>
+</body>
+</html>

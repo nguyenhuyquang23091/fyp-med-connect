@@ -24,3 +24,8 @@ spring:
     services:
       profile: "http://localhost:8081/profile"
 
+management:
+  endpoints:
+    web:
+       exposure:
+         include: info, health, prometheus, metrics

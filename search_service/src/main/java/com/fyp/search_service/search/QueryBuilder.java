@@ -205,14 +205,14 @@ public final class QueryBuilder {
     private static List<SortOptions> sortOptions(SearchFilter searchFilter) {
         List<SortOptions> sortOptions = new ArrayList<>();
         String sortedField = searchFilter.getSortBy();
-
         if (sortedField != null && !sortedField.isBlank()) {
             SortOrder sortOrder = searchFilter.getSortOrder() != null ? searchFilter.getSortOrder() : SortOrder.Asc;
             sortOptions.add(SortOptions.of(s -> s.field(f -> f
                     .field(sortedField)
                     .order(sortOrder)
             )));
-        } else {
+
+    } else {
             sortOptions.add(SortOptions.of(s -> s
                     .score(sc -> sc.order(SortOrder.Desc))
             ));

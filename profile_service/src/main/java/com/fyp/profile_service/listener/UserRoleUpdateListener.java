@@ -100,7 +100,8 @@ public class UserRoleUpdateListener {
         userProfileRepository.save(userProfile);
         Map<String, Object> afterState = cdcMapper.toProfileMap(doctorProfile);
 
-        afterState.put("fullName", userProfile.getFirstName() + " " + userProfile.getLastName());
+        afterState.put("firstName", userProfile.getFirstName());
+        afterState.put("lastName", userProfile.getLastName());
         afterState.put("email", userProfile.getEmail());
         afterState.put("avatar", userProfile.getAvatar());
 

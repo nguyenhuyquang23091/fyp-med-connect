@@ -1,10 +1,7 @@
 package com.fyp.notification_service.service;
 
 
-import com.fyp.notification_service.dto.request.ApiResponse;
-import com.fyp.notification_service.dto.request.EmailRequest;
-import com.fyp.notification_service.dto.request.SendEmailRequest;
-import com.fyp.notification_service.dto.request.Sender;
+import com.fyp.notification_service.dto.request.*;
 import com.fyp.notification_service.dto.response.EmailResponse;
 import com.fyp.notification_service.exceptions.AppException;
 import com.fyp.notification_service.exceptions.ErrorCode;
@@ -18,7 +15,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -31,14 +30,19 @@ public class EmailService {
     protected String apiKey;
 
     public EmailResponse sendMail(SendEmailRequest sendEmailRequest){
+
+        Map<String, Object> params = new HashMap<>();
+
+        params.put("username", sendEmailRequest.getTo().getName());
+
         EmailRequest emailRequest = EmailRequest
                 .builder()
                 .sender
                         (Sender.builder().name("Med Connect - Your Healthcare Service")
                                 .email("nguyenhuyquang230904@gmail.com").build())
                 .to(List.of(sendEmailRequest.getTo()))
-                .subject(sendEmailRequest.getSubject())
-                .htmlContent(sendEmailRequest.getHtmlContent())
+                .templateId(sendEmailRequest.getTemplateCode())
+                .params(params)
                 .build();
         try {
             return emailClient.sendEmail(apiKey, emailRequest);

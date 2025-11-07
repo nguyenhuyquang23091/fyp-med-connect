@@ -66,12 +66,15 @@ public class UserService {
         userProfileRequest.setEmail(user.getEmail());
         userProfileRequest.setGender(request.getGender());
         profileClient.createProfile(userProfileRequest);
-        NotificationEvent notificationEvent = NotificationEvent.builder()
+
+        NotificationEvent notificationEvent =
+                NotificationEvent.builder()
                 .channel("EMAIL")
-                .recipient(request.getEmail())
-                .subject("Welcome to Med Connect")
-                .body("Hello, " + request.getUsername())
+                .recipientEmail(request.getEmail())
+                .recipientUserName(request.getUsername())
+                .templateCode(3L)
                 .build();
+
         //publish message to kafka
         kafkaTemplate.send("notification-delivery",  notificationEvent);
         return  userMapper.toUserResponse(user);

@@ -37,7 +37,8 @@ public class DoctorProfile {
     String bio;
     Boolean isAvailable;
     List<String> languages;
-    String fullName;
+    String firstName;
+    String lastName;
     String email;
     String avatar;
 

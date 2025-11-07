@@ -5,6 +5,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.util.List;
+import java.util.Map;
 
 @Data
 @Builder
@@ -12,9 +13,12 @@ import java.util.List;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class EmailRequest {
-    Sender sender;
-     List<Recipient> to;
-     String subject;
-     String htmlContent;
 
+    Sender sender;
+
+    List<Recipient> to;
+
+    Long templateId;
+
+    Map<String, Object> params;
 }

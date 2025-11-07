@@ -31,6 +31,7 @@
 		<org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
 		<spring-boot.version>3.5.0</spring-boot.version>
 		<spring-cloud.version>2025.0.0</spring-cloud.version>
+		<micormeter-monitor.version>1.15.5</micormeter-monitor.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -54,6 +55,11 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-redis</artifactId>
 			<version>3.5.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-registry-prometheus</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>io.github.cdimascio</groupId>
@@ -121,6 +127,10 @@
 			<artifactId>spring-cloud-starter-openfeign</artifactId>
 			<version>4.3.0</version>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>
@@ -131,8 +141,18 @@
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
+
+			<dependency>
+				<groupId>io.micrometer</groupId>
+				<artifactId>micrometer-bom</artifactId>
+				<version>${micormeter-monitor.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
 		</dependencies>
+
 	</dependencyManagement>
+
 
 	<build>
 		<plugins>
