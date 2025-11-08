@@ -1,9 +1,7 @@
 package com.fyp.authservice.service;
 
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import com.fyp.authservice.constant.PredefinedRole;
@@ -67,11 +65,15 @@ public class UserService {
         userProfileRequest.setGender(request.getGender());
         profileClient.createProfile(userProfileRequest);
 
+        Map<String, Object> param = new HashMap<>();
+
+        param.put("username", request.getUsername());
+
         NotificationEvent notificationEvent =
                 NotificationEvent.builder()
                 .channel("EMAIL")
                 .recipientEmail(request.getEmail())
-                .recipientUserName(request.getUsername())
+                        .param(param)
                 .templateCode(3L)
                 .build();
 

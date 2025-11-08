@@ -12,9 +12,8 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class NotificationEvent {
     String channel;
-    String recipient;
-    String templateCode;
+    String recipientEmail;
+    Long templateCode;
     Map<String, Object> param;
-    String subject;
-    String body;
+
 }

@@ -29,11 +29,9 @@ public class EmailService {
     @Value("${spring.notification.email.brevo-apiKey}")
     protected String apiKey;
 
+
+
     public EmailResponse sendMail(SendEmailRequest sendEmailRequest){
-
-        Map<String, Object> params = new HashMap<>();
-
-        params.put("username", sendEmailRequest.getTo().getName());
 
         EmailRequest emailRequest = EmailRequest
                 .builder()
@@ -42,7 +40,7 @@ public class EmailService {
                                 .email("nguyenhuyquang230904@gmail.com").build())
                 .to(List.of(sendEmailRequest.getTo()))
                 .templateId(sendEmailRequest.getTemplateCode())
-                .params(params)
+                .params(sendEmailRequest.getParams())
                 .build();
         try {
             return emailClient.sendEmail(apiKey, emailRequest);

@@ -14,10 +14,8 @@ import java.util.Map;
 public class NotificationEvent {
     String channel;
     String recipientEmail;
-    String recipientUserName;
     Long templateCode;
     Map<String, Object> param;
-    String subject;
-    String body;
+
 
 }

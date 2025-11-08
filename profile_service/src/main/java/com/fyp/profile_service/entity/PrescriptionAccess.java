@@ -37,6 +37,6 @@ public class PrescriptionAccess {
     Instant respondedAt;
     String requestReason;
 
-    @Indexed(expireAfter = "60m")
+    @Indexed(expireAfter = "60s")
     Instant expiresAt;
 }

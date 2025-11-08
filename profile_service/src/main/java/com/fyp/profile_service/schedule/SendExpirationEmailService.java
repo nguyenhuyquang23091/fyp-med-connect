@@ -1,6 +1,7 @@
 package com.fyp.profile_service.schedule;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,9 +34,16 @@ public class SendExpirationEmailService {
     UserProfileRepository userProfileRepository;
     static final long _45_MINUTES_IN_SECONDS = 2700L;
     static final long _15_MINUTES_IN_MILLISECONDS = 900_000L;
+
+
+    static final long _15_SECONDS = 15L;
+
+    static final long _30_SECOND_IN_MILLISECONDS = 30000L;
+
+
     KafkaTemplate<String, Object> kafkaTemplate;
 
-    @Scheduled(fixedDelay = _15_MINUTES_IN_MILLISECONDS) // 15 minutes
+    @Scheduled(fixedDelay = _30_SECOND_IN_MILLISECONDS)
     public void sendExpirationEmailToDoctor() {
         try {
             log.info("Starting scheduled task: sendExpirationEmailToDoctor");
@@ -43,8 +51,10 @@ public class SendExpirationEmailService {
             Instant now = Instant.now();
             Instant _45MinutesAgo = now.minusSeconds(_45_MINUTES_IN_SECONDS);
 
+            Instant _15SecondAgo = now.minusSeconds(_15_SECONDS);
+
             List<PrescriptionAccess> inactiveRequests =
-                    accessRepository.findAllByAccessStatusAndRequestedAtBefore(AccessStatus.PENDING, _45MinutesAgo);
+                    accessRepository.findAllByAccessStatusAndRequestedAtBefore(AccessStatus.PENDING, _15SecondAgo);
 
             if (inactiveRequests.isEmpty()) {
                 log.info("No pending prescription access requests found that are older than 45 minutes");
@@ -102,18 +112,14 @@ public class SendExpirationEmailService {
                     }
 
                     // Build notification event
-                    String doctorFullName = doctorProfile.getFirstName() + " " + doctorProfile.getLastName();
-                    String patientFullName = patientProfile.getFirstName() + " " + patientProfile.getLastName();
-                    String prescriptionName = prescriptionAccess.getPrescriptionName();
+                    Map<String, Object> params =
+                            buildParam(prescriptionAccess, doctorProfile, patientProfile);
 
                     NotificationEvent notificationEvent = NotificationEvent.builder()
-                            .channel("EXPIRE")
-                            .recipient(doctorEmail)
-                            .subject("Nearly Expired Request")
-                            .body("Hello Dr. " + doctorFullName
-                                    + ", your prescription access request to \"" + prescriptionName
-                                    + "\" belonging to " + patientFullName
-                                    + " is nearly expired. Please contact your patient.")
+                            .channel("EMAIL")
+                            .recipientEmail(doctorEmail)
+                            .templateCode(4L)
+                            .param(params)
                             .build();
 
                     // Send to Kafka with async callback for error handling
@@ -148,5 +154,17 @@ public class SendExpirationEmailService {
         } catch (Exception e) {
             log.error("Critical error in sendExpirationEmailToDoctor scheduled task: {}", e.getMessage(), e);
         }
+    }
+
+    private static Map<String, Object> buildParam(PrescriptionAccess prescriptionAccess, UserProfile doctorProfile, UserProfile patientProfile) {
+        String doctorFullName = doctorProfile.getFirstName() + " " + doctorProfile.getLastName();
+        String patientFullName = patientProfile.getFirstName() + " " + patientProfile.getLastName();
+        String prescriptionName = prescriptionAccess.getPrescriptionName();
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("doctorFullName", doctorFullName);
+        params.put("patientFullName", patientFullName);
+        params.put("prescriptionName", prescriptionName);
+        return params;
     }
 }
