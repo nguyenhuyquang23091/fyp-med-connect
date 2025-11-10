@@ -29,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class SendExpirationEmailService {
+public class SendExpirationEmailScheduler {
     PrescriptionAccessRepository accessRepository;
     UserProfileRepository userProfileRepository;
     static final long _45_MINUTES_IN_SECONDS = 2700L;
@@ -77,6 +77,7 @@ public class SendExpirationEmailService {
             List<UserProfile> patientProfiles = userProfileRepository.findAllByUserIdIn(patientUserIds);
 
             // Create Maps for O(1) lookup of profiles
+            //modify as we have created separated DoctorProfileEntity
             Map<String, UserProfile> doctorProfileMap =
                     doctorProfiles.stream().collect(Collectors.toMap(UserProfile::getUserId, profile -> profile));
             Map<String, UserProfile> patientProfileMap =

@@ -28,38 +28,6 @@ public class NotificationController {
     EmailService emailService;
     NotificationService notificationService;
 
-    @KafkaListener(topics = "notification-delivery")
-    public void listenNotificationDelivery(NotificationEvent message){
-        log.info("Message receiver : {}" , message);
-        if("EMAIL".equals(message.getChannel())){
-            String recipientEmail = message.getRecipientEmail();
-            String recipientName;
-            long templateCode = message.getTemplateCode();
-
-            if( templateCode == 3L ){
-                recipientName = message.getParam().getOrDefault("username", "New Comer").toString();
-            } else if (templateCode == 4L){
-                recipientName = message.getParam().getOrDefault("doctorFullName", "Doctor").toString();
-            } else {
-                recipientName = message.getParam().getOrDefault("recipientName", "Valued User")
-                        .toString();
-            }
-
-            emailService.sendMail(SendEmailRequest.builder()
-                    .templateCode(message.getTemplateCode())
-                    .to(Recipient
-                            .builder()
-                            .name(recipientName)
-                            .email(recipientEmail)
-                            .build()
-                    )
-                    .params(message.getParam())
-                    .build());
-        }
-        // further other services like ( SMS)
-
-    }
-
     // REST endpoint to send direct WebSocket notifications
     @PostMapping("/send-notification")
     public ApiResponse<String> sendDirectNotification(@RequestBody @Valid  PrescriptionAccessNotification notificationRequest) {

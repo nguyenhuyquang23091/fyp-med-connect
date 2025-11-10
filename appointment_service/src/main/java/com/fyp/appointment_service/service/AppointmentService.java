@@ -6,12 +6,15 @@ import java.time.Instant;
 import java.util.List;
 
 import com.fyp.appointment_service.constant.AppointmentStatus;
+import com.fyp.appointment_service.constant.ConsultationType;
 import com.fyp.appointment_service.dto.request.PaymentRequest;
 import com.fyp.appointment_service.dto.response.*;
 import com.fyp.appointment_service.exceptions.AppException;
 import com.fyp.appointment_service.exceptions.ErrorCode;
 import com.fyp.appointment_service.repository.httpCLient.ProfileClient;
 import com.fyp.appointment_service.repository.httpCLient.VnPayClient;
+import event.dto.SessionVideoEvent;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -35,6 +38,8 @@ public class AppointmentService {
     AppointmentMapper appointmentMapper;
     ProfileClient profileClient;
     VnPayClient vnPayClient;
+
+    KafkaTemplate<String, Object> kafkaTemplate;
 
     public AppointmentResponse createAppointment(AppointmentRequest request){
         var authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -89,15 +94,50 @@ public class AppointmentService {
                 .build();
 
         PaymentResponse paymentResponse = vnPayClient.createVnPayment(paymentRequest).getResult();
-
-
-
         String paymentUrl  = paymentResponse.getPaymentUrl();
         AppointmentResponse appointmentResponse =  appointmentMapper.toAppointmentRespone(appointmentEntity);
         appointmentResponse.setPaymentURL(paymentUrl);
 
+        sendKafkaEvent(appointmentEntity);
+
         return  appointmentResponse;
     }
+
+
+
+    private void sendKafkaEvent( AppointmentEntity appointmentEntity){
+        if (appointmentEntity.getConsultationType() == ConsultationType.VIDEO_CALL){
+
+            SessionVideoEvent sessionVideoEvent =
+                    SessionVideoEvent.builder()
+                            .roomId(appointmentEntity.getId())
+                            .appointmentId(appointmentEntity.getId())
+                            .scheduledTime(appointmentEntity.getAppointmentDateTime().toString())
+                            .patientId(appointmentEntity.getUserId())
+                            .doctorId(appointmentEntity.getDoctorId())
+                    .build();
+
+            log.info("Event details - RoomId: {}, DoctorId: {}, PatientId: {}, ScheduledTime: {}",
+                    sessionVideoEvent.getRoomId(),
+                    sessionVideoEvent.getDoctorId(),
+                    sessionVideoEvent.getPatientId(),
+                    sessionVideoEvent.getScheduledTime());
+
+            try {
+                // Use .get() to make it synchronous and force immediate error visibility
+                var result = kafkaTemplate.send("video-call-events", sessionVideoEvent).get();
+                log.info("Successfully sent Kafka event for appointment: {} to topic: video-call-events. Partition: {}, Offset: {}",
+                        sessionVideoEvent.getAppointmentId(),
+                        result.getRecordMetadata().partition(),
+                        result.getRecordMetadata().offset());
+            } catch (Exception e) {
+                log.error("Failed to send Kafka event for appointment: {}. Error: {}",
+                        sessionVideoEvent.getAppointmentId(), e.getMessage(), e);
+            }
+        }
+    }
+
+
 
 
 

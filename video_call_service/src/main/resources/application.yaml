@@ -1,6 +1,34 @@
 server:
   port: 8095
+  servlet:
+    context-path: /video-call
 
 socket:
   host: localhost
   port: 9095
+
+spring:
+  datasource:
+    url: ${POSTGRES_URL}
+    username: ${POSTGRES_USERNAME}
+    password: ${POSTGRES_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  # Kafka Consumer Configuration
+  # Connects to Kafka broker and consumes appointment events
+  kafka:
+    bootstrap-servers: localhost:9094  # Kafka broker address (matches docker-compose.yml)
+    consumer:
+      group-id: video-call-group  # Consumer group for load balancing across multiple instances
+      auto-offset-reset: earliest  # Start from earliest message if no offset exists (latest = skip old messages)
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer  # Deserialize message keys
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer  # Deserialize JSON message bodies
+      properties:
+        spring.json.trusted.packages: "*"  # Trust all packages for JSON deserialization (use specific packages in production)

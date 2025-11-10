@@ -66,6 +66,7 @@ rag-chat-bot/src/main/resources/.env
 search_service/src/main/resources/.env
 api-gateway/src/main/resources/.env
 vnpay/src/main/resources/.env
+video_call_service/src/main/resources/.env
 
 # Build output .env files
 **/target/classes/.env

@@ -79,7 +79,7 @@
             
             // Test 1: Check if server is reachable via HTTP
             log('Test 1: Checking HTTP accessibility...');
-            fetch('http://localhost:9094/socket.io/?EIO=4&transport=polling')
+            fetch('http://localhost:9095/socket.io/?EIO=4&transport=polling')
                 .then(response => {
                     log(`✓ HTTP Response: ${response.status} ${response.statusText}`);
                     return response.text();
@@ -104,7 +104,7 @@
                 socket.disconnect();
             }
 
-            socket = io('http://localhost:9094', {
+            socket = io('http://localhost:9095', {
                 transports: ['polling', 'websocket'],
                 upgrade: true,
                 rememberUpgrade: false,
@@ -150,7 +150,7 @@
             configs.forEach((config, index) => {
                 setTimeout(() => {
                     log(`Trying ${config.name}...`);
-                    const testSocket = io('http://localhost:9094', config);
+                    const testSocket = io('http://localhost:9095', config);
                     
                     testSocket.on('connect', () => {
                         log(`✓ ${config.name} worked! Session: ${testSocket.id}`);

@@ -44,6 +44,7 @@ public class SocketIOConfiguration {
         config.setOrigin("*");
         config.setAllowCustomRequests(true);
 
+
         // Configure SocketIO JSON serialization with JavaTimeModule for Instant/LocalDateTime support
         config.setJsonSupport(new JacksonJsonSupport() {
             @Override
