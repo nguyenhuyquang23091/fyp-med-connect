@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,6 +19,7 @@ import com.fyp.profile_service.dto.request.DoctorPrescriptionUpdateRequest;
 import com.fyp.profile_service.dto.request.PatientPrescriptionCreateRequest;
 import com.fyp.profile_service.dto.request.PatientPrescriptionUpdateRequest;
 import com.fyp.profile_service.dto.request.PrescriptionNotification;
+import com.fyp.profile_service.dto.response.PageResponse;
 import com.fyp.profile_service.dto.response.PrescriptionAccessResponse;
 import com.fyp.profile_service.dto.response.PrescriptionGeneralResponse;
 import com.fyp.profile_service.dto.response.PrescriptionResponse;
@@ -31,7 +32,6 @@ import com.fyp.profile_service.repository.UserPrescriptionRepository;
 import com.fyp.profile_service.repository.UserProfileRepository;
 import com.fyp.profile_service.repository.httpClient.FileFeignClient;
 import com.fyp.profile_service.repository.httpClient.NotificationFeignClient;
-import com.fyp.profile_service.utils.CacheEvictionUtil;
 import com.fyp.profile_service.utils.ProfileServiceUtil;
 
 import lombok.AccessLevel;
@@ -52,12 +52,17 @@ public class UserPrescriptionService {
     FileFeignClient fileService;
     NotificationFeignClient notificationService;
     AsyncServiceFileManagement asyncServiceFileManagement;
-    CacheEvictionUtil cacheEvictionUtil;
+
     // User Prescription Management
 
-    @CacheEvict(
-            value = "PRESCRIPTION_LIST_CACHE",
-            key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()")
+    /**
+     * Creates a new prescription for the authenticated patient.
+     * Note: No caching due to frequent status changes and cross-user modifications.
+     *
+     * @param request the prescription creation request
+     * @param prescriptionImages the prescription image files
+     * @return PrescriptionResponse containing the created prescription
+     */
     public PrescriptionResponse createPrescription(
             PatientPrescriptionCreateRequest request, List<MultipartFile> prescriptionImages) {
 
@@ -116,9 +121,12 @@ public class UserPrescriptionService {
         return userPrescriptionMapper.toUserPrescriptionResponse(userPrescription);
     }
 
-    @Cacheable(
-            value = "PRESCRIPTION_LIST_CACHE",
-            key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()")
+    /**
+     * Retrieves all prescriptions for the authenticated patient.
+     * Note: No caching - prescriptions have frequent status changes.
+     *
+     * @return List of PrescriptionGeneralResponse
+     */
     public List<PrescriptionGeneralResponse> getMyPrescriptions() {
         String userId = ProfileServiceUtil.getCurrentUserId();
         List<UserPrescription> userPrescriptionList =
@@ -130,7 +138,13 @@ public class UserPrescriptionService {
                 .toList();
     }
 
-    @Cacheable(value = "PRESCRIPTION_DETAIL_CACHE", key = "#prescriptionId")
+    /**
+     * Retrieves a specific prescription for the authenticated patient.
+     * Note: No caching - prescription status changes frequently.
+     *
+     * @param prescriptionId the prescription ID
+     * @return PrescriptionResponse containing the prescription details
+     */
     public PrescriptionResponse getMyPrescription(String prescriptionId) {
         String userId = ProfileServiceUtil.getCurrentUserId();
 
@@ -141,13 +155,19 @@ public class UserPrescriptionService {
         return userPrescriptionMapper.toUserPrescriptionResponse(userPrescription);
     }
 
-    @Caching(
-            evict = {
-                @CacheEvict(
-                        value = "PRESCRIPTION_LIST_CACHE",
-                        key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()"),
-                @CacheEvict(value = "PRESCRIPTION_DETAIL_CACHE", key = "#prescriptionId")
-            })
+    public PageResponse<PrescriptionResponse> getMyLatestPrescription(int page, int size) {
+        String userId = ProfileServiceUtil.getCurrentUserId();
+        return getLatestPrescriptionsByUserId(userId, page, size);
+    }
+
+    /**
+     * Updates a prescription for the authenticated patient.
+     *
+     * @param prescriptionId the prescription ID to update
+     * @param request the update request
+     * @param newImages new prescription images to add
+     * @return PrescriptionResponse containing the updated prescription
+     */
     public PrescriptionResponse updateMyPrescription(
             String prescriptionId, PatientPrescriptionUpdateRequest request, List<MultipartFile> newImages) {
         String userId = ProfileServiceUtil.getCurrentUserId();
@@ -212,13 +232,11 @@ public class UserPrescriptionService {
         return userPrescriptionMapper.toUserPrescriptionResponse(repository.save(prescription));
     }
 
-    @Caching(
-            evict = {
-                @CacheEvict(
-                        value = "PRESCRIPTION_LIST_CACHE",
-                        key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()"),
-                @CacheEvict(value = "PRESCRIPTION_DETAIL_CACHE", key = "#prescriptionId")
-            })
+    /**
+     * Deletes a prescription for the authenticated patient.
+     *
+     * @param prescriptionId the prescription ID to delete
+     */
     public void deleteMyPrescription(String prescriptionId) {
         String userId = ProfileServiceUtil.getCurrentUserId();
         UserPrescription prescription = repository
@@ -327,12 +345,9 @@ public class UserPrescriptionService {
         userPrescriptionMapper.updatePrescriptionFromDoctor(userPrescription, doctorPrescriptionUpdateRequest);
         userPrescription = repository.save(userPrescription);
 
-        // Evict caches after update
-        cacheEvictionUtil.evictPrescriptionCaches(prescriptionId);
-
         PrescriptionNotification prescriptionNotification =
                 PrescriptionNotification.prescriptionUpdate(userPrescription);
-        notificationService.sendRealtimeNotification(prescriptionNotification);
+        notificationService.sendPrescriptionNotification(prescriptionNotification);
         return userPrescriptionMapper.toUserPrescriptionResponse(userPrescription);
     }
 
@@ -373,15 +388,33 @@ public class UserPrescriptionService {
                     patientId);
         }
 
-        // Evict caches using the patientId we already have (avoids extra DB fetch)
-        cacheEvictionUtil.evictPrescriptionCaches(patientId, prescriptionId);
-
         // Delete the prescription from database
         repository.deleteById(prescriptionId);
 
         PrescriptionNotification prescriptionNotification =
                 PrescriptionNotification.prescriptionDelete(userPrescription);
 
-        notificationService.sendRealtimeNotification(prescriptionNotification);
+        notificationService.sendPrescriptionNotification(prescriptionNotification);
+    }
+
+    @PreAuthorize("hasRole('DOCTOR')")
+    public PageResponse<PrescriptionResponse> getOnePatientLatestPrescription(String userId, int page, int size) {
+        return getLatestPrescriptionsByUserId(userId, page, size);
+    }
+
+    private PageResponse<PrescriptionResponse> getLatestPrescriptionsByUserId(String userId, int page, int size) {
+        Sort sort = Sort.by("createdAt").descending();
+        Pageable limit = PageRequest.of(page - 1, size, sort);
+        var prescriptions = repository.findByUserId(userId, limit);
+
+        return PageResponse.<PrescriptionResponse>builder()
+                .currentPage(page)
+                .pageSize(size)
+                .totalPages(prescriptions.getTotalPages())
+                .totalElements(prescriptions.getTotalElements())
+                .data(prescriptions.getContent().stream()
+                        .map(userPrescriptionMapper::toUserPrescriptionResponse)
+                        .toList())
+                .build();
     }
 }

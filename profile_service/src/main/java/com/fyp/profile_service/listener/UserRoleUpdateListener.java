@@ -3,22 +3,20 @@ package com.fyp.profile_service.listener;
 import java.time.LocalDateTime;
 import java.util.Map;
 
-import com.fyp.event.dto.DoctorProfileEntityType;
-import com.fyp.profile_service.mapper.DoctorProfileCdcMapper;
-import com.fyp.profile_service.mapper.DoctorProfileMapper;
-import com.fyp.profile_service.service.DoctorProfileCdcProducer;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fyp.event.dto.DoctorProfileEntityType;
 import com.fyp.event.dto.UserRoleUpdateEvent;
 import com.fyp.profile_service.entity.DoctorProfile;
 import com.fyp.profile_service.entity.UserProfile;
 import com.fyp.profile_service.exceptions.AppException;
 import com.fyp.profile_service.exceptions.ErrorCode;
+import com.fyp.profile_service.mapper.DoctorProfileCdcMapper;
 import com.fyp.profile_service.repository.DoctorProfileRepository;
 import com.fyp.profile_service.repository.UserProfileRepository;
+import com.fyp.profile_service.service.DoctorProfileCdcProducer;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -34,14 +32,10 @@ public class UserRoleUpdateListener {
     UserProfileRepository userProfileRepository;
     DoctorProfileRepository doctorProfileRepository;
 
-
     DoctorProfileCdcProducer cdcProducer;
     DoctorProfileCdcMapper cdcMapper;
 
-
     private static final String DOCTOR_ROLE = "DOCTOR";
-
-
 
     @KafkaListener(topics = "user-role-updated", groupId = "profile-service-group")
     @Transactional
@@ -105,7 +99,8 @@ public class UserRoleUpdateListener {
         afterState.put("email", userProfile.getEmail());
         afterState.put("avatar", userProfile.getAvatar());
 
-        cdcProducer.publishCreate(DoctorProfileEntityType.PROFILE, afterState, doctorProfile.getId(), doctorProfile.getUserId());
+        cdcProducer.publishCreate(
+                DoctorProfileEntityType.PROFILE, afterState, doctorProfile.getId(), doctorProfile.getUserId());
 
         log.info("Successfully created and linked DoctorProfile for user: {}", userId);
     }
@@ -126,8 +121,6 @@ public class UserRoleUpdateListener {
                 userProfile.setDoctorProfile(null);
                 userProfileRepository.save(userProfile);
             });
-
-
         });
     }
 }

@@ -3,6 +3,10 @@ server:
     servlet:
         context-path : /appointment
 
+service:
+    internal:
+        auth-token: ${SERVICE_INTERNAL_AUTH_TOKEN}
+
 spring:
     datasource:
         url: ${POSTGRES_URL:}
@@ -17,6 +21,11 @@ spring:
         producer:
             key-serializer: org.apache.kafka.common.serialization.StringSerializer
             value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+        consumer:
+            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+            properties:
+                spring.json.trusted.packages: event.dto
 
 # Microservice URLs
 microservices:

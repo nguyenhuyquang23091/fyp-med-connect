@@ -1,13 +1,11 @@
 package com.fyp.profile_service.exceptions;
 
-
-import lombok.Getter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 
+import lombok.Getter;
+
 @Getter
-
-
 public enum ErrorCode {
     UNIDENTIFIED_EXCEPTION(9999, "Unidentified Error", HttpStatus.INTERNAL_SERVER_ERROR),
     USER_EXISTED(1001, "User is existed", HttpStatus.BAD_REQUEST),

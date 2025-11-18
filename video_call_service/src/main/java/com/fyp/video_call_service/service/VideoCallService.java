@@ -21,7 +21,6 @@ public class VideoCallService {
     RoomStateService roomStateService;
 
 
-
     public void handleJoinRoom(SocketIOClient client, RoomRequest roomRequest){
         String clientSessionId = client.getSessionId().toString();
         String room = roomRequest.getRoom();
@@ -99,12 +98,6 @@ public class VideoCallService {
         client.getNamespace().getRoomOperations(room)
                 .sendEvent("userLeft", clientSessionId);
     }
-
-
-
-
-
-
 
 
     private void broadcastToOther(SocketIOClient sender,

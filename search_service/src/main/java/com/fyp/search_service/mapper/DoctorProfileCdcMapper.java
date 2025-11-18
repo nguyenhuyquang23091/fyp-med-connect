@@ -6,7 +6,11 @@ import org.mapstruct.Mapping;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 
 @Mapper(componentModel = "spring")
@@ -26,7 +30,7 @@ public interface DoctorProfileCdcMapper {
 
 
     @Mapping(target = "isAvailable", expression = "java(toBoolean(cdcData.get(\"isAvailable\")))")
-    @Mapping(target = "languages", ignore = true)
+    @Mapping(target = "languages", expression = "java(toLanguageList(cdcData.get(\"languages\")))")
     @Mapping(target = "services", ignore = true)
     @Mapping(target = "specialties", ignore = true)
     @Mapping(target = "experiences", ignore = true)
@@ -139,6 +143,42 @@ public interface DoctorProfileCdcMapper {
                     .toString();
         }
         return obj.toString();
+    }
+
+    /**
+     * Converts languages from CDC data (List or array) to List<String>.
+     * Reason: Languages are stored as a list in Neo4j and need proper conversion from CDC Map payload
+     *
+     * @param obj the languages object from CDC data (can be List, array, or null)
+     * @return List of language strings, or null if input is null
+     */
+    default java.util.List<String> toLanguageList(Object obj) {
+        if (obj == null) return null;
+
+        // Handle if it's already a List
+        if (obj instanceof List) {
+           List<?> list = (List<?>) obj;
+            return list.stream()
+                    .filter(item -> item != null)
+                    .map(Object::toString)
+                    .collect(Collectors.toList());
+        }
+
+        // Handle if it's an array
+        if (obj.getClass().isArray()) {
+            Object[] array = (Object[]) obj;
+            return Arrays.stream(array)
+                    .filter(item -> item != null)
+                    .map(Object::toString)
+                    .collect(Collectors.toList());
+        }
+
+        // Single string - wrap in list
+        if (obj instanceof String) {
+            return Collections.singletonList(obj.toString());
+        }
+
+        return null;
     }
 }
 

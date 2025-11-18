@@ -13,10 +13,10 @@ import org.springframework.kafka.support.SendResult;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import com.fyp.event.dto.NotificationEvent;
 import com.fyp.profile_service.constant.AccessStatus;
 import com.fyp.profile_service.entity.PrescriptionAccess;
 import com.fyp.profile_service.entity.UserProfile;
-import com.fyp.event.dto.NotificationEvent;
 import com.fyp.profile_service.repository.PrescriptionAccessRepository;
 import com.fyp.profile_service.repository.UserProfileRepository;
 
@@ -35,11 +35,9 @@ public class SendExpirationEmailScheduler {
     static final long _45_MINUTES_IN_SECONDS = 2700L;
     static final long _15_MINUTES_IN_MILLISECONDS = 900_000L;
 
-
     static final long _15_SECONDS = 15L;
 
     static final long _30_SECOND_IN_MILLISECONDS = 30000L;
-
 
     KafkaTemplate<String, Object> kafkaTemplate;
 
@@ -77,7 +75,7 @@ public class SendExpirationEmailScheduler {
             List<UserProfile> patientProfiles = userProfileRepository.findAllByUserIdIn(patientUserIds);
 
             // Create Maps for O(1) lookup of profiles
-            //modify as we have created separated DoctorProfileEntity
+            // modify as we have created separated DoctorProfileEntity
             Map<String, UserProfile> doctorProfileMap =
                     doctorProfiles.stream().collect(Collectors.toMap(UserProfile::getUserId, profile -> profile));
             Map<String, UserProfile> patientProfileMap =
@@ -113,8 +111,7 @@ public class SendExpirationEmailScheduler {
                     }
 
                     // Build notification event
-                    Map<String, Object> params =
-                            buildParam(prescriptionAccess, doctorProfile, patientProfile);
+                    Map<String, Object> params = buildParam(prescriptionAccess, doctorProfile, patientProfile);
 
                     NotificationEvent notificationEvent = NotificationEvent.builder()
                             .channel("EMAIL")
@@ -157,7 +154,8 @@ public class SendExpirationEmailScheduler {
         }
     }
 
-    private static Map<String, Object> buildParam(PrescriptionAccess prescriptionAccess, UserProfile doctorProfile, UserProfile patientProfile) {
+    private static Map<String, Object> buildParam(
+            PrescriptionAccess prescriptionAccess, UserProfile doctorProfile, UserProfile patientProfile) {
         String doctorFullName = doctorProfile.getFirstName() + " " + doctorProfile.getLastName();
         String patientFullName = patientProfile.getFirstName() + " " + patientProfile.getLastName();
         String prescriptionName = prescriptionAccess.getPrescriptionName();

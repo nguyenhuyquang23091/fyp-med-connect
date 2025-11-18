@@ -112,8 +112,8 @@ public class ElasticSearchProxy {
 
         float normalizedScore = normalizeScore(score);
 
-        //revise this 2morrow
-        String fullName = doctor.getLastName() + doctor.getFirstName();
+        // Reason: Concatenate firstName and lastName with proper spacing and null handling for display
+        String fullName = buildFullName(doctor.getFirstName(), doctor.getLastName());
 
         return Stream.of(
                 createSuggestion(fullName, SuggestionType.DOCTOR_NAME, normalizedScore,
@@ -195,5 +195,21 @@ public class ElasticSearchProxy {
             return new AppException(ErrorCode.ELASTICSEARCH_CONNECTION_ERROR);
         }
         return new AppException(ErrorCode.ELASTICSEARCH_QUERY_ERROR);
+    }
+
+
+    private String buildFullName(String firstName, String lastName) {
+        boolean hasFirstName = firstName != null && !firstName.isBlank();
+        boolean hasLastName = lastName != null && !lastName.isBlank();
+
+        if (!hasFirstName && !hasLastName) {
+            return null;
+        }
+
+        if (hasFirstName && hasLastName) {
+            return firstName + " " + lastName;
+        }
+
+        return hasFirstName ? firstName : lastName;
     }
 }

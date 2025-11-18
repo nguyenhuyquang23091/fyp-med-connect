@@ -6,19 +6,28 @@ package com.fyp.rag_chat_bot.services;
 import com.fyp.rag_chat_bot.dto.request.ChatRequest;
 import com.fyp.rag_chat_bot.dto.response.ApiResponse;
 import com.fyp.rag_chat_bot.dto.response.ChatBotResponse;
+import com.fyp.rag_chat_bot.dto.response.PageResponse;
 import com.fyp.rag_chat_bot.dto.response.UserProfileResponse;
 import com.fyp.rag_chat_bot.entity.SessionEntity;
 import com.fyp.rag_chat_bot.repository.httpClient.ProfileClient;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.units.qual.C;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
+import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -101,6 +110,57 @@ public class RagService {
     public void deleteConversation(String conversationId){
         chatMemoryRepository.deleteByConversationId(conversationId);
     }
+
+
+    public PageResponse<ChatBotResponse> getMyCurrentConversationData(String conversationId, int page, int size) {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = authentication.getName();
+
+        // Access control via session_info table
+        sessionService.validateSessionInfo(conversationId, userId);
+
+        // Get all messages from chat_memory table
+        List<Message> allMessages = chatMemoryRepository.findByConversationId(conversationId);
+
+        // Convert to 0-based indexing
+        int start = (page - 1) * size;
+
+        // Handle empty results for out-of-bounds pages
+        if (start >= allMessages.size() && !allMessages.isEmpty()) {
+            return buildEmptyPageResponse(page, size, allMessages.size());
+        }
+
+
+        int end = Math.min(start + size, allMessages.size());
+        List<Message> pagedMessages = allMessages.subList(Math.max(0, start), end);
+
+        return PageResponse.<ChatBotResponse>builder()
+                .currentPage(page)
+                .totalPages((int) Math.ceil((double) allMessages.size() / size))
+                .pageSize(size)
+                .totalElements(allMessages.size())
+                .data(pagedMessages.stream()
+                        .map(message -> ChatBotResponse.builder()
+                                .content(message.getText())
+                                .conversationId(conversationId)
+                                .build())
+                        .toList())
+                .build();
+    }
+
+    private PageResponse<ChatBotResponse> buildEmptyPageResponse(int page, int size, int allMessageSize){
+        return  PageResponse.<ChatBotResponse>builder()
+                .currentPage(page)
+                .totalPages((int) Math.ceil((double) allMessageSize / size))
+                .pageSize(size)
+                .totalElements(allMessageSize)
+                .data(List.of()) // Empty list
+                .build();
+
+    }
+
+
+
 
 
 

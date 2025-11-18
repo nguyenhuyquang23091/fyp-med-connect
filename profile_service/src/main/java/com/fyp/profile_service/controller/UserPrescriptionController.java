@@ -15,6 +15,7 @@ import com.fyp.profile_service.dto.request.DoctorPrescriptionUpdateRequest;
 import com.fyp.profile_service.dto.request.PatientPrescriptionCreateRequest;
 import com.fyp.profile_service.dto.request.PatientPrescriptionUpdateRequest;
 import com.fyp.profile_service.dto.request.PrescriptionNotification;
+import com.fyp.profile_service.dto.response.PageResponse;
 import com.fyp.profile_service.dto.response.PrescriptionAccessResponse;
 import com.fyp.profile_service.dto.response.PrescriptionGeneralResponse;
 import com.fyp.profile_service.dto.response.PrescriptionResponse;
@@ -80,6 +81,15 @@ public class UserPrescriptionController {
                 .build();
     }
 
+    @GetMapping("/myPrescription/latest")
+    public ApiResponse<PageResponse<PrescriptionResponse>> getMyLatestPrescriptions(
+            @RequestParam(value = "page", required = false, defaultValue = "1") int page,
+            @RequestParam(value = "size", required = false, defaultValue = "5") int size) {
+        return ApiResponse.<PageResponse<PrescriptionResponse>>builder()
+                .result(userPrescriptionService.getMyLatestPrescription(page, size))
+                .build();
+    }
+
     @PutMapping("/access-request/{requestId}/approve")
     public ApiResponse<PrescriptionAccessResponse> approveAccessRequest(
             @PathVariable @NotBlank(message = "Request ID cannot be blank") String requestId) {
@@ -139,6 +149,16 @@ public class UserPrescriptionController {
         userPrescriptionService.doctorDeletePrescription(prescriptionId);
         return ApiResponse.<Void>builder()
                 .message("User Prescription Deleted Success Fully")
+                .build();
+    }
+
+    @GetMapping("/doctor/{patientId}/latest")
+    public ApiResponse<PageResponse<PrescriptionResponse>> getPatientLatestPrescriptions(
+            @PathVariable @NotBlank(message = "Patient ID cannot be blank") String patientId,
+            @RequestParam(value = "page", required = false, defaultValue = "1") int page,
+            @RequestParam(value = "size", required = false, defaultValue = "5") int size) {
+        return ApiResponse.<PageResponse<PrescriptionResponse>>builder()
+                .result(userPrescriptionService.getOnePatientLatestPrescription(patientId, page, size))
                 .build();
     }
 }

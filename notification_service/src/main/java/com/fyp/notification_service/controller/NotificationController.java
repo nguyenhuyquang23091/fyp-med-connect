@@ -1,7 +1,6 @@
 package com.fyp.notification_service.controller;
 
 
-import com.fyp.event.dto.NotificationEvent;
 import com.fyp.notification_service.dto.request.*;
 import com.fyp.notification_service.dto.response.NotificationResponse;
 import com.fyp.notification_service.dto.response.PageResponse;
@@ -12,12 +11,8 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Slf4j
 @Component
@@ -29,13 +24,30 @@ public class NotificationController {
     NotificationService notificationService;
 
     // REST endpoint to send direct WebSocket notifications
-    @PostMapping("/send-notification")
-    public ApiResponse<String> sendDirectNotification(@RequestBody @Valid  PrescriptionAccessNotification notificationRequest) {
+    @PostMapping("/send-prescription-notification")
+    public ApiResponse<String> sendPrescriptionNotification(@RequestBody @Valid  PrescriptionAccessNotification notificationRequest) {
         notificationService.sendPrescriptionAccessNotification(notificationRequest);
         return ApiResponse.<String>builder()
                 .result("Notification sent successfully")
                 .build();
     }
+
+    @PostMapping("/send-video-call-notification")
+    public ApiResponse<String> sendVideoCallNotification(@RequestBody @Valid VideoCallNotificationRequest request) {
+        notificationService.sendVideoCallNotification(request);
+        return ApiResponse.<String>builder()
+                .result("Notification sent successfully")
+                .build();
+    }
+
+    @PostMapping("/send-appointments-notification")
+    public ApiResponse<String> sendAppointmentsNotification(@RequestBody @Valid AppointmentNotificationRequest request) {
+        notificationService.sendAppointmentNotification(request);
+        return ApiResponse.<String>builder()
+                .result("Notification sent successfully")
+                .build();
+    }
+
 
     @GetMapping("/my-notifications")
     public ApiResponse<PageResponse<NotificationResponse>> getAllNotification(

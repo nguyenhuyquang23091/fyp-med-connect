@@ -22,6 +22,9 @@ spring:
       chat:
         options:
           model: ${MODEL:}
+          temperature: 0.2  # Low temperature for more focused, consistent responses
+          num-predict: 512  # Max tokens limit - controls response length (Ollama parameter)
+          top-p: 0.9
       embedding:
         options:
           model: ${MODEL:}

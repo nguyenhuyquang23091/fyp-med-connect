@@ -3,17 +3,25 @@ package com.fyp.appointment_service.service;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.fyp.appointment_service.constant.AppointmentStatus;
 import com.fyp.appointment_service.constant.ConsultationType;
+import com.fyp.appointment_service.dto.request.AppointmentNotificationRequest;
+import com.fyp.appointment_service.dto.request.AppointmentUpdateRequest;
 import com.fyp.appointment_service.dto.request.PaymentRequest;
 import com.fyp.appointment_service.dto.response.*;
 import com.fyp.appointment_service.exceptions.AppException;
 import com.fyp.appointment_service.exceptions.ErrorCode;
+import com.fyp.appointment_service.repository.httpCLient.NotificationFeignClient;
 import com.fyp.appointment_service.repository.httpCLient.ProfileClient;
 import com.fyp.appointment_service.repository.httpCLient.VnPayClient;
 import event.dto.SessionVideoEvent;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -38,6 +46,7 @@ public class AppointmentService {
     AppointmentMapper appointmentMapper;
     ProfileClient profileClient;
     VnPayClient vnPayClient;
+    NotificationFeignClient notificationFeignClient;
 
     KafkaTemplate<String, Object> kafkaTemplate;
 
@@ -105,6 +114,8 @@ public class AppointmentService {
 
 
 
+
+
     private void sendKafkaEvent( AppointmentEntity appointmentEntity){
         if (appointmentEntity.getConsultationType() == ConsultationType.VIDEO_CALL){
 
@@ -117,36 +128,17 @@ public class AppointmentService {
                             .doctorId(appointmentEntity.getDoctorId())
                     .build();
 
-            log.info("Event details - RoomId: {}, DoctorId: {}, PatientId: {}, ScheduledTime: {}",
-                    sessionVideoEvent.getRoomId(),
-                    sessionVideoEvent.getDoctorId(),
-                    sessionVideoEvent.getPatientId(),
-                    sessionVideoEvent.getScheduledTime());
+            kafkaTemplate.send("video-call-events", sessionVideoEvent);
 
-            try {
-                // Use .get() to make it synchronous and force immediate error visibility
-                var result = kafkaTemplate.send("video-call-events", sessionVideoEvent).get();
-                log.info("Successfully sent Kafka event for appointment: {} to topic: video-call-events. Partition: {}, Offset: {}",
-                        sessionVideoEvent.getAppointmentId(),
-                        result.getRecordMetadata().partition(),
-                        result.getRecordMetadata().offset());
-            } catch (Exception e) {
-                log.error("Failed to send Kafka event for appointment: {}. Error: {}",
-                        sessionVideoEvent.getAppointmentId(), e.getMessage(), e);
-            }
         }
     }
 
-
-
-
-
-    public AppointmentResponse cancelMyAppointment(){
+    public AppointmentResponse cancelMyAppointment(String appointmentId){
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         String userId = authentication.getName();
         // Fetch the appointment
-        AppointmentEntity appointment = appointmentRepository.findByUserId(userId)
-                .orElseThrow(() -> new AppException(ErrorCode.APPOINTMENT_NOT_FOUND));
+        AppointmentEntity appointment = appointmentRepository
+                .findByUserIdAndId(userId, appointmentId).orElseThrow(() -> new AppException(ErrorCode.APPOINTMENT_NOT_FOUND));
 
         // Check if already cancelled
         if (appointment.getAppointmentStatus() == AppointmentStatus.CANCELLED) {
@@ -161,18 +153,71 @@ public class AppointmentService {
         appointment.setModifiedDate(Instant.now());
         AppointmentEntity updatedAppointment = appointmentRepository.save(appointment);
 
+        // Send notification to doctor about appointment cancellation
+        AppointmentNotificationRequest notification =
+                AppointmentNotificationRequest.cancelledAppointment(updatedAppointment, updatedAppointment.getDoctorId());
+        notificationFeignClient.sendAppointmentNotification(notification);
+
         return appointmentMapper.toAppointmentRespone(updatedAppointment);
     }
 
 
-    public List<AppointmentResponse> getMyAppointment(){
+    
+    public PageResponse<AppointmentResponse> getMyAppointment(int page, int size){
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         String userId = authentication.getName();
-        return appointmentRepository
-                .findAllByUserId(userId)
-                .stream().map(appointmentMapper::toAppointmentRespone)
-                .toList();
+
+        Sort sort = Sort.by("createdDate").descending();
+        Pageable pageable = PageRequest.of(page - 1, size, sort);
+
+        Page<AppointmentEntity> appointments = appointmentRepository.findAllByUserId(userId, pageable);
+
+        return PageResponse.<AppointmentResponse>builder()
+                .currentPage(page)
+                .pageSize(size)
+                .totalPages(appointments.getTotalPages())
+                .totalElements(appointments.getTotalElements())
+                .data(appointments.getContent().stream()
+                        .map(appointmentMapper::toAppointmentRespone)
+                        .toList())
+                .build();
     }
+
+    public AppointmentResponse updateMyAppointment(String appointmentId, AppointmentUpdateRequest request){
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = authentication.getName();
+
+        AppointmentEntity appointmentEntity =
+                appointmentRepository.findByUserIdAndId(userId, appointmentId)
+                        .orElseThrow(() -> new AppException(ErrorCode.APPOINTMENT_NOT_FOUND));
+
+        appointmentMapper.updateAppointment(appointmentEntity, request);
+
+        appointmentEntity.setModifiedDate(Instant.now());
+
+        appointmentRepository.save(appointmentEntity);
+
+        // Send notification to doctor about appointment update
+        AppointmentNotificationRequest notification =
+                AppointmentNotificationRequest.updatedAppointment(appointmentEntity, appointmentEntity.getDoctorId());
+        notificationFeignClient.sendAppointmentNotification(notification);
+
+        return  appointmentMapper.toAppointmentRespone(appointmentEntity);
+
+    }
+
+    public AppointmentResponse getOneAppointment(String appointmentId){
+        //Add get one doctor profile vao
+        // use for displaying doctor avatar
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = authentication.getName();
+        AppointmentEntity appointment = appointmentRepository
+                .findByUserIdAndId(userId, appointmentId).orElseThrow(() -> new AppException(ErrorCode.APPOINTMENT_NOT_FOUND));
+        return  appointmentMapper.toAppointmentRespone(appointment);
+
+    }
+
+
 
     public void deleteMyAppointment(){
         var authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -183,15 +228,54 @@ public class AppointmentService {
         appointmentRepository.deleteById(appointmentEntity.getId());
     }
 
-    //DOCTOR AUTHORITIES
 
-    @PreAuthorize("hasRole('DOCTOR')")
-    public List<AppointmentResponse> getDoctorAppointment(){
+    public PageResponse<AppointmentResponse> getMyUpcomingAppointments(int page, int size){
         var authentication = SecurityContextHolder.getContext().getAuthentication();
-       String doctorIdJWT = authentication.getName();
-                return appointmentRepository
-                        .findAllByDoctorId(doctorIdJWT)
-                        .stream().map(appointmentMapper::toAppointmentRespone)
-                        .toList();
+        String userId = authentication.getName();
+        return getUpcomingAppointmentsByUserId(userId, page, size);
+    }
+
+
+
+    
+    @PreAuthorize("hasRole('DOCTOR')")
+    public PageResponse<AppointmentResponse> getDoctorAppointment(int page, int size){
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        String doctorIdJWT = authentication.getName();
+
+        Sort sort = Sort.by("appointmentDateTime").descending();
+        Pageable pageable = PageRequest.of(page - 1, size, sort);
+
+        Page<AppointmentEntity> appointments = appointmentRepository.findAllByDoctorId(doctorIdJWT, pageable);
+
+        return PageResponse.<AppointmentResponse>builder()
+                .currentPage(page)
+                .pageSize(size)
+                .totalPages(appointments.getTotalPages())
+                .totalElements(appointments.getTotalElements())
+                .data(appointments.getContent().stream()
+                        .map(appointmentMapper::toAppointmentRespone)
+                        .toList())
+                .build();
+    }
+
+    //DOCTOR AUTHORITIES
+    @PreAuthorize("hasRole('DOCTOR')")
+    public PageResponse<AppointmentResponse> getOnePatientUpcomingAppointment(String userId, int page, int size){
+        return getUpcomingAppointmentsByUserId(userId, page, size);
+    }
+
+    private PageResponse<AppointmentResponse> getUpcomingAppointmentsByUserId(String userId, int page, int size){
+        Sort sort = Sort.by("appointmentDateTime").ascending();
+        Pageable limit = PageRequest.of(page - 1, size, sort);
+        var appointment = appointmentRepository.findByUserIdAndAppointmentDateTimeAfterAndAppointmentStatus
+                (userId, LocalDateTime.now(), AppointmentStatus.UPCOMING, limit);
+        return PageResponse.<AppointmentResponse>builder()
+                .currentPage(page)
+                .pageSize(size)
+                .totalPages(appointment.getTotalPages())
+                .totalElements(appointment.getTotalElements())
+                .data(appointment.getContent().stream().map(appointmentMapper::toAppointmentRespone).toList())
+                .build();
     }
 }

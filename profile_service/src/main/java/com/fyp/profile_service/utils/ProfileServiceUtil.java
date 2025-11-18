@@ -10,8 +10,7 @@ import com.fyp.profile_service.exceptions.ErrorCode;
 public final class ProfileServiceUtil {
     private ProfileServiceUtil() {}
 
-
-    //define publish CDC event in here
+    // define publish CDC event in here
     public static String getCurrentUserId() {
         var auth = SecurityContextHolder.getContext().getAuthentication();
         return auth.getName();

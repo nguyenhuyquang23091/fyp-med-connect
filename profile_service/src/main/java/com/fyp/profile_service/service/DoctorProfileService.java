@@ -5,14 +5,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.fyp.profile_service.dto.request.DoctorProfileUpdateRequest;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fyp.event.dto.DoctorProfileEntityType;
 import com.fyp.profile_service.dto.request.DoctorExperienceUpdateRequest;
+import com.fyp.profile_service.dto.request.DoctorProfileUpdateRequest;
 import com.fyp.profile_service.dto.request.DoctorServiceRequest;
 import com.fyp.profile_service.dto.request.DoctorSpecialtyRequest;
 import com.fyp.profile_service.dto.response.DoctorExperienceResponse;
@@ -63,39 +65,62 @@ public class DoctorProfileService {
     DoctorProfileCdcProducer cdcProducer;
     DoctorProfileCdcMapper cdcMapper;
 
-    // dùng valid thay vì cái đống đù má check if else bằng null hay không
+    /**
+     * Updates the base doctor profile information.
+     * Evicts cache after update to ensure consistency.
+     *
+     * @param request the doctor profile update request
+     * @return DoctorProfileResponse containing the updated profile
+     */
     @PreAuthorize("hasRole('DOCTOR')")
     @Transactional
-    public DoctorProfileResponse updateBaseDoctorProfile(DoctorProfileUpdateRequest request){
-    String userId = ProfileServiceUtil.getCurrentUserId();
-    DoctorProfile doctorProfile = doctorProfileRepository.findByUserId(userId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+    @CacheEvict(
+            value = "DOCTOR_PROFILE_CACHE",
+            key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()")
+    public DoctorProfileResponse updateBaseDoctorProfile(DoctorProfileUpdateRequest request) {
+        String userId = ProfileServiceUtil.getCurrentUserId();
+        DoctorProfile doctorProfile = doctorProfileRepository
+                .findByUserId(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
-    Map<String, Object> beforeState =  cdcMapper.toProfileMap(doctorProfile);
+        Map<String, Object> beforeState = cdcMapper.toProfileMap(doctorProfile);
 
-    doctorProfile.setBio(request.getBio());
-    doctorProfile.setResidency(request.getResidency());
-    doctorProfile.setYearsOfExperience(request.getYearsOfExperience());
-    doctorProfile.setIsAvailable(request.getIsAvailable());
-    doctorProfile.setLanguages(request.getLanguages());
+        doctorProfile.setBio(request.getBio());
+        doctorProfile.setResidency(request.getResidency());
+        doctorProfile.setYearsOfExperience(request.getYearsOfExperience());
+        doctorProfile.setIsAvailable(request.getIsAvailable());
+        doctorProfile.setLanguages(request.getLanguages());
 
-    doctorProfileRepository.save(doctorProfile);
-    Map<String, Object> afterState = cdcMapper.toProfileMap(doctorProfile);
+        doctorProfileRepository.save(doctorProfile);
 
-    cdcProducer.publishUpdate(DoctorProfileEntityType.PROFILE, beforeState, afterState, doctorProfile.getId(), doctorProfile.getUserId());
+        Map<String, Object> afterState = cdcMapper.toProfileMap(doctorProfile);
 
+        cdcProducer.publishUpdate(
+                DoctorProfileEntityType.PROFILE,
+                beforeState,
+                afterState,
+                doctorProfile.getId(),
+                doctorProfile.getUserId());
 
         UserProfile basicUserProfile = userProfileRepository
                 .findByUserId(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         return doctorProfileMapper.toResponse(doctorProfile, basicUserProfile);
-
-
     }
 
-
+    /**
+     * Adds a service to the doctor's profile.
+     * Evicts cache after addition to ensure consistency.
+     *
+     * @param request the doctor service request
+     * @return DoctorServiceResponse containing the added service
+     */
     @PreAuthorize("hasRole('DOCTOR')")
     @Transactional
+    @CacheEvict(
+            value = "DOCTOR_PROFILE_CACHE",
+            key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()")
     public DoctorServiceResponse addServiceToProfile(DoctorServiceRequest request) {
 
         String userId = ProfileServiceUtil.getCurrentUserId();
@@ -127,8 +152,19 @@ public class DoctorProfileService {
         return serviceRelationshipMapper.toResponse(relationship);
     }
 
+    /**
+     * Updates a service in the doctor's profile.
+     * Evicts cache after update to ensure consistency.
+     *
+     * @param relationshipId the relationship ID to update
+     * @param request the doctor service request
+     * @return DoctorServiceResponse containing the updated service
+     */
     @PreAuthorize("hasRole('DOCTOR')")
     @Transactional
+    @CacheEvict(
+            value = "DOCTOR_PROFILE_CACHE",
+            key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()")
     public DoctorServiceResponse updateServiceInProfile(Long relationshipId, DoctorServiceRequest request) {
         String userId = ProfileServiceUtil.getCurrentUserId();
         DoctorProfile doctorProfile = doctorProfileRepository
@@ -166,14 +202,24 @@ public class DoctorProfileService {
         Map<String, Object> afterState = cdcMapper.toServiceMap(relationship);
 
         // Publish CDC event for service update
-        cdcProducer.publishUpdate(DoctorProfileEntityType.SERVICE, beforeState, afterState, doctorProfile.getId(), userId);
+        cdcProducer.publishUpdate(
+                DoctorProfileEntityType.SERVICE, beforeState, afterState, doctorProfile.getId(), userId);
 
         log.info("Doctor {} updated service relationship {}", userId, relationshipId);
         return serviceRelationshipMapper.toResponse(relationship);
     }
 
+    /**
+     * Removes a service from the doctor's profile.
+     * Evicts cache after removal to ensure consistency.
+     *
+     * @param relationshipId the relationship ID to remove
+     */
     @PreAuthorize("hasRole('DOCTOR')")
     @Transactional
+    @CacheEvict(
+            value = "DOCTOR_PROFILE_CACHE",
+            key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()")
     public void removeServiceFromProfile(Long relationshipId) {
         String userId = ProfileServiceUtil.getCurrentUserId();
         DoctorProfile doctorProfile = doctorProfileRepository
@@ -209,8 +255,18 @@ public class DoctorProfileService {
                 .toList();
     }
 
+    /**
+     * Adds a specialty to the doctor's profile.
+     * Evicts cache after addition to ensure consistency.
+     *
+     * @param request the doctor specialty request
+     * @return DoctorSpecialtyResponse containing the added specialty
+     */
     @PreAuthorize("hasRole('DOCTOR')")
     @Transactional
+    @CacheEvict(
+            value = "DOCTOR_PROFILE_CACHE",
+            key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()")
     public DoctorSpecialtyResponse addSpecialtyToProfile(DoctorSpecialtyRequest request) {
         String userId = ProfileServiceUtil.getCurrentUserId();
         DoctorProfile doctorProfile = doctorProfileRepository
@@ -246,8 +302,19 @@ public class DoctorProfileService {
         return specialtyRelationshipMapper.toResponse(relationship);
     }
 
+    /**
+     * Updates a specialty in the doctor's profile.
+     * Evicts cache after update to ensure consistency.
+     *
+     * @param relationshipId the relationship ID to update
+     * @param request the doctor specialty request
+     * @return DoctorSpecialtyResponse containing the updated specialty
+     */
     @PreAuthorize("hasRole('DOCTOR')")
     @Transactional
+    @CacheEvict(
+            value = "DOCTOR_PROFILE_CACHE",
+            key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()")
     public DoctorSpecialtyResponse updateSpecialtyInProfile(Long relationshipId, DoctorSpecialtyRequest request) {
         String userId = ProfileServiceUtil.getCurrentUserId();
         DoctorProfile doctorProfile = doctorProfileRepository
@@ -293,14 +360,24 @@ public class DoctorProfileService {
         Map<String, Object> afterState = cdcMapper.toSpecialtyMap(relationship);
 
         // Publish CDC event for specialty update
-        cdcProducer.publishUpdate(DoctorProfileEntityType.SPECIALTY, beforeState, afterState, doctorProfile.getId(), userId);
+        cdcProducer.publishUpdate(
+                DoctorProfileEntityType.SPECIALTY, beforeState, afterState, doctorProfile.getId(), userId);
 
         log.info("Doctor {} updated specialty relationship {}", userId, relationshipId);
         return specialtyRelationshipMapper.toResponse(relationship);
     }
 
+    /**
+     * Removes a specialty from the doctor's profile.
+     * Evicts cache after removal to ensure consistency.
+     *
+     * @param relationshipId the relationship ID to remove
+     */
     @PreAuthorize("hasRole('DOCTOR')")
     @Transactional
+    @CacheEvict(
+            value = "DOCTOR_PROFILE_CACHE",
+            key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()")
     public void removeSpecialtyFromProfile(Long relationshipId) {
         String userId = ProfileServiceUtil.getCurrentUserId();
         DoctorProfile doctorProfile = doctorProfileRepository
@@ -336,8 +413,19 @@ public class DoctorProfileService {
                 .toList();
     }
 
+    /**
+     * Updates experience metadata for the doctor's profile.
+     * Evicts cache after update to ensure consistency.
+     *
+     * @param experienceId the experience ID to update
+     * @param request the doctor experience update request
+     * @return DoctorExperienceResponse containing the updated experience
+     */
     @PreAuthorize("hasRole('DOCTOR')")
     @Transactional
+    @CacheEvict(
+            value = "DOCTOR_PROFILE_CACHE",
+            key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()")
     public DoctorExperienceResponse updateExperienceMetadata(
             String experienceId, DoctorExperienceUpdateRequest request) {
         String userId = ProfileServiceUtil.getCurrentUserId();
@@ -369,7 +457,16 @@ public class DoctorProfileService {
                 .toList();
     }
 
+    /**
+     * Retrieves the doctor profile for the authenticated doctor.
+     * Cached for performance - doctor profiles are read frequently but change infrequently.
+     *
+     * @return DoctorProfileResponse containing the doctor's profile
+     */
     @PreAuthorize("hasRole('DOCTOR')")
+    @Cacheable(
+            value = "DOCTOR_PROFILE_CACHE",
+            key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()")
     public DoctorProfileResponse getMyDoctorProfile() {
         String userId = ProfileServiceUtil.getCurrentUserId();
         DoctorProfile doctorProfile = doctorProfileRepository
@@ -380,6 +477,7 @@ public class DoctorProfileService {
                 .findByUserId(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
+        log.info("Fetching doctor profile from database for userId: {}", userId);
         return doctorProfileMapper.toResponse(doctorProfile, basicUserProfile);
     }
 
@@ -404,7 +502,15 @@ public class DoctorProfileService {
                 .toList();
     }
 
+    /**
+     * Retrieves a specific doctor's profile by userId.
+     * CRITICAL: Cached for performance - called by appointment service on every appointment creation.
+     *
+     * @param userId the doctor's user ID
+     * @return DoctorProfileResponse containing the doctor's profile
+     */
     @PreAuthorize("hasAuthority('VIEW_DOCTOR_PROFILES')")
+    @Cacheable(value = "DOCTOR_PROFILE_CACHE", key = "#userId")
     public DoctorProfileResponse getOneDoctorProfile(String userId) {
         DoctorProfile doctorProfile = doctorProfileRepository
                 .findByUserId(userId)
@@ -414,6 +520,7 @@ public class DoctorProfileService {
                 .findByUserId(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
+        log.info("Fetching doctor profile from database for userId: {}", userId);
         return doctorProfileMapper.toResponse(doctorProfile, basicUserProfile);
     }
 }

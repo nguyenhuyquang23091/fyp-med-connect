@@ -45,7 +45,7 @@ public class PrescriptionAccessService {
 
         prescriptionAccess = accessRequestRepository.save(prescriptionAccess);
         PrescriptionNotification notificationRequest = PrescriptionNotification.accessRequest(prescriptionAccess);
-        notificationFeignClient.sendRealtimeNotification(notificationRequest);
+        notificationFeignClient.sendPrescriptionNotification(notificationRequest);
         return prescriptionAccessMapper.toPrescriptionResponse(prescriptionAccess);
     }
 
@@ -65,7 +65,7 @@ public class PrescriptionAccessService {
         PrescriptionNotification acceptNotificationRequest =
                 PrescriptionNotification.accessApproved(prescriptionAccess);
 
-        notificationFeignClient.sendRealtimeNotification(acceptNotificationRequest);
+        notificationFeignClient.sendPrescriptionNotification(acceptNotificationRequest);
 
         notificationFeignClient.markNotificationAsProcessed(patientId, requestId);
 
@@ -88,7 +88,7 @@ public class PrescriptionAccessService {
         PrescriptionNotification denyNotificationRequest = PrescriptionNotification.accessDenied(prescriptionAccess);
 
         log.info("Current accessStatus is{} ", prescriptionAccess.getAccessStatus());
-        notificationFeignClient.sendRealtimeNotification(denyNotificationRequest);
+        notificationFeignClient.sendPrescriptionNotification(denyNotificationRequest);
         notificationFeignClient.markNotificationAsProcessed(patientId, requestId);
         return prescriptionAccessMapper.toPrescriptionResponse(accessRequestRepository.save(prescriptionAccess));
     }

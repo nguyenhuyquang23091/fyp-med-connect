@@ -3,7 +3,7 @@ package com.fyp.video_call_service.listener;
 
 import com.fyp.video_call_service.constant.SessionStatus;
 import com.fyp.video_call_service.entity.SessionVideoCall;
-import com.fyp.video_call_service.repository.httpCLient.SessionVideoCallRepository;
+import com.fyp.video_call_service.repository.SessionVideoCallRepository;
 import event.dto.SessionVideoEvent;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;

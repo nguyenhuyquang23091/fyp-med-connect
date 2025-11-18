@@ -55,7 +55,21 @@
         }
       },
 
-      "fullName": {
+      "firstName": {
+        "type": "text",
+        "analyzer": "edge_ngram_analyzer",
+        "search_analyzer": "edge_ngram_search_analyzer",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          },
+          "raw": {
+            "type": "text",
+            "analyzer": "standard"
+          }
+        }
+      },
+      "lastName": {
         "type": "text",
         "analyzer": "edge_ngram_analyzer",
         "search_analyzer": "edge_ngram_search_analyzer",

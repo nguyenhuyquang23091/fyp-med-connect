@@ -70,10 +70,23 @@ public final class QueryBuilder {
                         .boost(1.5f)
                 )
         );
-        //full Name - highest priority ( 2.0)
+
+        
+        // Reason: Search firstName with highest priority (boost: 2.5) for better name matching
         boolQuery.should(s -> s
                 .match(m -> m
-                        .field("fullName")
+                        .field("firstName")
+                        .query(term)
+                        .fuzziness("AUTO")
+                        .prefixLength(1)
+                        .boost(2.5f)
+                )
+        );
+
+        // Reason: Search lastName with high priority (boost: 2.0) for better name matching
+        boolQuery.should(s -> s
+                .match(m -> m
+                        .field("lastName")
                         .query(term)
                         .fuzziness("AUTO")
                         .prefixLength(1)
@@ -234,8 +247,9 @@ public final class QueryBuilder {
         builder.index("doctor_profiles");
         builder.query(Query.of(q -> q.bool(boolQuery.build())));
         builder.size(Math.min(limit, 10));
+        // Reason: Fetch firstName and lastName separately as fullName doesn't exist in Elasticsearch document
         builder.source(src -> src.filter(f -> f
-                        .includes("doctorProfileId", "fullName", "residency", "avatar",
+                        .includes("doctorProfileId", "firstName", "lastName", "residency", "avatar",
                                 "specialties.specialtyName", "services.serviceName",
                                 "experiences.hospitalName")));
         builder.sort(SortOptions.of(s -> s.score(sc -> sc.order(SortOrder.Desc))));

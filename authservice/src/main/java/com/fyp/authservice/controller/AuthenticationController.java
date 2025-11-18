@@ -30,6 +30,8 @@ public class AuthenticationController {
              .result(result)
              .build();
     }
+    
+
     @PostMapping("/introspect")
     ApiResponse<IntrospectResponse> validateValid(@Valid @RequestBody IntrospectRequest introspectRequest) throws JOSEException, ParseException {
 
@@ -38,6 +40,7 @@ public class AuthenticationController {
                 .result(result)
                 .build();
     }
+
     @PostMapping("/logout")
     ApiResponse<Void> logout(@Valid @RequestBody LogOutRequest request)
             throws JOSEException, ParseException {

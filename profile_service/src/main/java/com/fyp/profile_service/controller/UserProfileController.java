@@ -48,8 +48,6 @@ public class UserProfileController {
         userProfileService.deleteProfile(profileId);
     }
 
-
-
     // doctor api
     @GetMapping("/users/get-all-patients")
     public ApiResponse<List<UserProfileResponse>> getAllPatientProfile() {

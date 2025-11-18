@@ -28,4 +28,6 @@ public interface PostgresSessionRepository extends JpaRepository<SessionEntity, 
     @Transactional
     @Query("DELETE FROM SessionEntity s WHERE s.lastUpdatedAt < :threshold")
     int deleteInactiveSessions(@Param("threshold") Instant threshold);
+
+
 }

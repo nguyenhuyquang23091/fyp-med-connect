@@ -27,7 +27,7 @@ import java.util.List;
 @Validated
 public class SearchServiceController {
  ElasticSearchProxy elasticSearchProxy;
- DoctorProfileSearchService doctorProfileSearchService;
+DoctorProfileSearchService doctorProfileSearchService;
 
  @PostMapping("/doctor")
  public ApiResponse<PageResponse<DoctorProfileResponse>> search( @RequestBody SearchFilter searchFilter){

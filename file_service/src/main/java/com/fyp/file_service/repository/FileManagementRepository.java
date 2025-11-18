@@ -12,3 +12,4 @@ public interface FileManagementRepository extends MongoRepository<FileManagement
 
     Optional<FileManagement> findBySecureUrlAndOwnerId(String secureUrl, String ownerId);
 }
+

@@ -1,4 +1,4 @@
-package com.fyp.video_call_service.repository.httpCLient;
+package com.fyp.video_call_service.repository;
 
 
 import com.fyp.video_call_service.constant.SessionStatus;

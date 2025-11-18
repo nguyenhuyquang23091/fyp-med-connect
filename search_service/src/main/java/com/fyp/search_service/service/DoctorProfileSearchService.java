@@ -96,12 +96,24 @@ public class DoctorProfileSearchService {
     private void createOrUpdateProfile(Map<String, Object> data, String doctorProfileId, String userId) {
         DoctorProfile profile = doctorProfileCdcMapper.toProfile(data);
 
-        // Preserve existing nested entities if profile already exists
+        // Reason: If profile already exists, preserve nested entities and user profile fields
+        // that are not included in PROFILE CDC events (firstName, lastName, email, avatar)
+        // Languages ARE included in CDC events, so only preserve if CDC data is null
+
         doctorProfileRepository.findById(doctorProfileId).ifPresent(existing -> {
             profile.setServices(existing.getServices());
             profile.setSpecialties(existing.getSpecialties());
             profile.setExperiences(existing.getExperiences());
-            profile.setLanguages(existing.getLanguages());
+
+            // Only preserve languages if CDC data didn't include it
+            if (profile.getLanguages() == null && existing.getLanguages() != null) {
+                profile.setLanguages(existing.getLanguages());
+            }
+
+            profile.setFirstName(existing.getFirstName());
+            profile.setLastName(existing.getLastName());
+            profile.setEmail(existing.getEmail());
+            profile.setAvatar(existing.getAvatar());
         });
 
         doctorProfileRepository.save(profile);
@@ -114,11 +126,22 @@ public class DoctorProfileSearchService {
         doctorProfileRepository.findById(doctorProfileId).ifPresentOrElse(existing -> {
             DoctorProfile updated = doctorProfileCdcMapper.toProfile(data);
 
-            // Preserve nested entities and languages
+            // Preserve nested entities and user profile fields
             updated.setServices(existing.getServices());
             updated.setSpecialties(existing.getSpecialties());
             updated.setExperiences(existing.getExperiences());
-            updated.setLanguages(existing.getLanguages());
+
+            // Only preserve languages if CDC data didn't include it
+            if (updated.getLanguages() == null && existing.getLanguages() != null) {
+                updated.setLanguages(existing.getLanguages());
+            }
+
+            updated.setFirstName(existing.getFirstName());
+            updated.setLastName(existing.getLastName());
+            updated.setEmail(existing.getEmail());
+            updated.setAvatar(existing.getAvatar());
+
+
 
             doctorProfileRepository.save(updated);
             log.info("Updated doctor profile in Elasticsearch - profileId: {}", doctorProfileId);

@@ -2,7 +2,9 @@ package com.fyp.notification_service.service;
 
 import com.corundumstudio.socketio.SocketIOServer;
 import com.fyp.notification_service.constant.PredefinedNotificationType;
+import com.fyp.notification_service.dto.request.AppointmentNotificationRequest;
 import com.fyp.notification_service.dto.request.NotificationRequest;
+import com.fyp.notification_service.dto.request.VideoCallNotificationRequest;
 import com.fyp.notification_service.dto.response.PageResponse;
 import com.fyp.notification_service.dto.request.PrescriptionAccessNotification;
 import com.fyp.notification_service.dto.response.NotificationResponse;
@@ -36,7 +38,7 @@ public class NotificationService {
     NotificationRepository notificationRepository;
     NotificationMapper notificationMapper;
 
-    private void sendNotification(NotificationRequest notification) {
+    public void sendNotification(NotificationRequest notification) {
         String recipientId = notification.getRecipientId();
 
         Notification notificationEntity = Notification
@@ -54,26 +56,50 @@ public class NotificationService {
         String roomName = "user_" + recipientId;
         socketIOServer.getRoomOperations(roomName).sendEvent("notification", notificationResponse);
         log.info("Notification sent to room: {}", roomName);
-
     }
-
-
 
     private Map<String, Object> extractMetadata(NotificationRequest notification) {
         Map<String, Object> metadata = new HashMap<>();
 
-        if (notification instanceof PrescriptionAccessNotification accessNotif) {
-            putIfNotNull(metadata, "requestId", accessNotif.getRequestId());
-            putIfNotNull(metadata, "doctorId", accessNotif.getDoctorUserId());
-            putIfNotNull(metadata, "prescriptionId", accessNotif.getPrescriptionId());
-            putIfNotNull(metadata, "prescriptionName", accessNotif.getPrescriptionName());
-            putIfNotNull(metadata, "requestReason", accessNotif.getRequestReason());
+        if (notification instanceof PrescriptionAccessNotification accessNotification) {
+            putIfNotNull(metadata, "requestId", accessNotification.getRequestId());
+            putIfNotNull(metadata, "doctorId", accessNotification.getDoctorUserId());
+            putIfNotNull(metadata, "prescriptionId", accessNotification.getPrescriptionId());
+            putIfNotNull(metadata, "prescriptionName", accessNotification.getPrescriptionName());
+            putIfNotNull(metadata, "requestReason", accessNotification.getRequestReason());
+        } else if (notification instanceof VideoCallNotificationRequest videoCallNotificationRequest) {
+
+            putIfNotNull(metadata, "roomId", videoCallNotificationRequest.getRoomId());
+            putIfNotNull(metadata, "appointmentId", videoCallNotificationRequest.getAppointmentId());
+            putIfNotNull(metadata, "doctorId", videoCallNotificationRequest.getDoctorId());
+            putIfNotNull(metadata, "patientId", videoCallNotificationRequest.getPatientId());
+        } else if (notification instanceof AppointmentNotificationRequest appointmentNotificationRequest) {
+
+            putIfNotNull(metadata, "appointmentId", appointmentNotificationRequest.getAppointmentId());
+            putIfNotNull(metadata, "patientFullName", appointmentNotificationRequest.getPatientFullName());
+            putIfNotNull(metadata, "reasons", appointmentNotificationRequest.getReasons());
+            putIfNotNull(metadata, "phoneNumber", appointmentNotificationRequest.getPhoneNumber());
+            putIfNotNull(metadata, "appointmentDateTime", appointmentNotificationRequest.getAppointmentDateTime());
+
+
         }
+
         // Future: Add other notification type metadata extraction here
 
         return metadata;
     }
 
+    public void sendPrescriptionAccessNotification(PrescriptionAccessNotification notification) {
+        sendNotification(notification);
+    }
+
+    public void sendVideoCallNotification(VideoCallNotificationRequest videoCallNotificationRequest){
+        sendNotification(videoCallNotificationRequest);
+    }
+
+    public void sendAppointmentNotification(AppointmentNotificationRequest appointmentNotificationRequest){
+        sendNotification(appointmentNotificationRequest);
+    }
 
     private void putIfNotNull(Map<String, Object> map, String key, Object value) {
         if (value != null) {
@@ -81,9 +107,7 @@ public class NotificationService {
         }
     }
 
-    public void sendPrescriptionAccessNotification(PrescriptionAccessNotification notification) {
-        sendNotification(notification);
-    }
+
     //future scalability, send mail when user book appointment/payment
 
 

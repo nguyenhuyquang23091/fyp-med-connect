@@ -17,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
-
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -25,7 +24,6 @@ import lombok.extern.slf4j.Slf4j;
 public class DoctorProfileCdcProducer {
 
     KafkaTemplate<String, Object> kafkaTemplate;
-
 
     public void publishCdcEvent(
             CdcOperation operation,
@@ -52,9 +50,8 @@ public class DoctorProfileCdcProducer {
                     .source(source)
                     .build();
 
-            DoctorProfileCdcEvent event = DoctorProfileCdcEvent.builder()
-                    .payload(payload)
-                    .build();
+            DoctorProfileCdcEvent event =
+                    DoctorProfileCdcEvent.builder().payload(payload).build();
 
             kafkaTemplate.send(KafkaTopicConfig.DOCTOR_PROFILE_CDC_TOPIC, userId, event);
 
@@ -75,14 +72,10 @@ public class DoctorProfileCdcProducer {
         }
     }
 
-
-
     public void publishCreate(
             DoctorProfileEntityType entityType, Map<String, Object> after, String doctorProfileId, String userId) {
         publishCdcEvent(CdcOperation.CREATE, entityType, null, after, doctorProfileId, userId);
     }
-
-
 
     public void publishUpdate(
             DoctorProfileEntityType entityType,
@@ -92,7 +85,6 @@ public class DoctorProfileCdcProducer {
             String userId) {
         publishCdcEvent(CdcOperation.UPDATE, entityType, before, after, doctorProfileId, userId);
     }
-
 
     public void publishDelete(
             DoctorProfileEntityType entityType, Map<String, Object> before, String doctorProfileId, String userId) {

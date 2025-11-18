@@ -1,7 +1,5 @@
 package com.fyp.event.dto;
 
-
-
 public enum CdcOperation {
     CREATE("c"),
 
@@ -11,9 +9,9 @@ public enum CdcOperation {
 
     DELETE("d");
 
-    private final String code ;
+    private final String code;
 
-     CdcOperation(String code){
+    CdcOperation(String code) {
         this.code = code;
     }
 

@@ -3,6 +3,8 @@ package com.fyp.profile_service.repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
@@ -15,5 +17,5 @@ public interface UserPrescriptionRepository extends MongoRepository<UserPrescrip
 
     Optional<UserPrescription> findByIdAndUserId(String prescriptionId, String userId);
 
-    Optional<UserPrescription> deleteByIdAndUserId(String prescriptionId, String userId);
+    Page<UserPrescription> findByUserId(String userId, Pageable pageable);
 }

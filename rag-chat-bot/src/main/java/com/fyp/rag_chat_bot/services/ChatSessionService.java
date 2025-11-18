@@ -1,5 +1,7 @@
 package com.fyp.rag_chat_bot.services;
 
+import com.fyp.profile_service.exceptions.AppException;
+import com.fyp.profile_service.exceptions.ErrorCode;
 import com.fyp.rag_chat_bot.entity.SessionEntity;
 import com.fyp.rag_chat_bot.repository.PostgresSessionRepository;
 import lombok.AccessLevel;
@@ -52,6 +54,12 @@ public class ChatSessionService {
         SessionEntity savedSession = postgresSessionRepository.save(sessionEntity);
 
         return savedSession;
+    }
+
+
+    protected void validateSessionInfo(String conversationId, String userId){
+        postgresSessionRepository.findByConversationIdAndUserId
+                (conversationId, userId).orElseThrow(() -> new AppException(ErrorCode.UNAUTHORIZED));
     }
 
 

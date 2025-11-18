@@ -15,5 +15,4 @@ public class NotificationEvent {
     String recipientEmail;
     Long templateCode;
     Map<String, Object> param;
-
 }

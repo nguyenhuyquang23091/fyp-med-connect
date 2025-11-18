@@ -18,10 +18,10 @@ import com.fyp.profile_service.dto.response.NotificationResponse;
         configuration = AuthenticationInterceptor.class)
 public interface NotificationFeignClient {
     @PostMapping(
-            value = "/send-notification",
+            value = "/send-prescription-notification",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    ApiResponse<String> sendRealtimeNotification(@RequestBody PrescriptionNotification request);
+    ApiResponse<String> sendPrescriptionNotification(@RequestBody PrescriptionNotification request);
 
     @PostMapping(
             value = "/email/send",

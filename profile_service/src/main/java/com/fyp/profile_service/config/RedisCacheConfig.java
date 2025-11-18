@@ -69,11 +69,17 @@ public class RedisCacheConfig {
         // Map specific caches to their configurations
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
 
+        // User profile caching - low mutation, high read frequency
         cacheConfigurations.put("PROFILE_CACHE", defaultConfig);
-        cacheConfigurations.put("PRESCRIPTION_DETAIL_CACHE", defaultConfig);
 
-        // List/collection caches use config WITHOUT typing
-        cacheConfigurations.put("PRESCRIPTION_LIST_CACHE", listConfig);
+        // Doctor profile caching - low mutation, very high read frequency (appointment creation)
+        cacheConfigurations.put("DOCTOR_PROFILE_CACHE", defaultConfig);
+
+        // Note: Prescription caching removed due to:
+        // - High mutation frequency (status changes)
+        // - Dynamic access control (per-doctor permissions)
+        // - Complex cross-user modifications
+        // Direct database reads provide better consistency
 
         return RedisCacheManager.builder(redisConnectionFactory)
                 .cacheDefaults(defaultConfig)

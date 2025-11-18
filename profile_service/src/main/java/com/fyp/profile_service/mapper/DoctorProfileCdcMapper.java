@@ -1,13 +1,11 @@
 package com.fyp.profile_service.mapper;
 
-import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.stereotype.Component;
 
 import com.fyp.profile_service.entity.*;
-
 
 @Component
 public class DoctorProfileCdcMapper {
@@ -25,8 +23,13 @@ public class DoctorProfileCdcMapper {
         map.put("yearsOfExperience", profile.getYearsOfExperience());
         map.put("bio", profile.getBio());
         map.put("residency", profile.getResidency());
-        map.put("createdAt", profile.getCreatedAt() != null ? profile.getCreatedAt().toString() : null);
-        map.put("updatedAt", profile.getUpdatedAt() != null ? profile.getUpdatedAt().toString() : null);
+        map.put("languages", profile.getLanguages());
+        map.put(
+                "createdAt",
+                profile.getCreatedAt() != null ? profile.getCreatedAt().toString() : null);
+        map.put(
+                "updatedAt",
+                profile.getUpdatedAt() != null ? profile.getUpdatedAt().toString() : null);
 
         return map;
     }
@@ -40,9 +43,11 @@ public class DoctorProfileCdcMapper {
 
         map.put("relationshipId", relationship.getId());
         map.put("isPrimary", relationship.getIsPrimary());
-        map.put("certificationDate", relationship.getCertificationDate() != null
-                ? relationship.getCertificationDate().toString()
-                : null);
+        map.put(
+                "certificationDate",
+                relationship.getCertificationDate() != null
+                        ? relationship.getCertificationDate().toString()
+                        : null);
         map.put("certificationBody", relationship.getCertificationBody());
         map.put("yearsOfExperienceInSpecialty", relationship.getYearsOfExperienceInSpecialty());
 
@@ -57,7 +62,6 @@ public class DoctorProfileCdcMapper {
         return map;
     }
 
-
     public Map<String, Object> toServiceMap(DoctorServiceRelationship relationship) {
         Map<String, Object> map = new HashMap<>();
 
@@ -66,7 +70,9 @@ public class DoctorProfileCdcMapper {
         }
 
         map.put("relationshipId", relationship.getId());
-        map.put("price", relationship.getPrice() != null ? relationship.getPrice().toString() : null);
+        map.put(
+                "price",
+                relationship.getPrice() != null ? relationship.getPrice().toString() : null);
         map.put("currency", relationship.getCurrency());
         map.put("displayOrder", relationship.getDisplayOrder());
 
@@ -105,8 +111,14 @@ public class DoctorProfileCdcMapper {
             map.put("location", experience.getLocation());
             map.put("country", experience.getCountry());
             map.put("position", experience.getPosition());
-            map.put("startDate", experience.getStartDate() != null ? experience.getStartDate().toString() : null);
-            map.put("endDate", experience.getEndDate() != null ? experience.getEndDate().toString() : null);
+            map.put(
+                    "startDate",
+                    experience.getStartDate() != null
+                            ? experience.getStartDate().toString()
+                            : null);
+            map.put(
+                    "endDate",
+                    experience.getEndDate() != null ? experience.getEndDate().toString() : null);
             map.put("isCurrent", experience.getIsCurrent());
             map.put("description", experience.getDescription());
         }

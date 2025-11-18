@@ -3,8 +3,10 @@ package com.fyp.appointment_service.controller;
 
 import com.fyp.appointment_service.dto.request.ApiResponse;
 import com.fyp.appointment_service.dto.request.AppointmentRequest;
+import com.fyp.appointment_service.dto.request.AppointmentUpdateRequest;
 import com.fyp.appointment_service.dto.request.PaymentRequest;
 import com.fyp.appointment_service.dto.response.AppointmentResponse;
+import com.fyp.appointment_service.dto.response.PageResponse;
 import com.fyp.appointment_service.dto.response.PaymentResponse;
 import com.fyp.appointment_service.service.AppointmentService;
 import jakarta.validation.Valid;
@@ -36,26 +38,49 @@ public class AppointmentController {
     }
 
 
-
-    @GetMapping()
-    public List<AppointmentResponse> getDoctorAppointment(){
-        return appointmentService.getDoctorAppointment();
-    }
-
-
     @GetMapping("/my-appointments")
-    public ApiResponse<List<AppointmentResponse>> getMyAppointments(){
-        return ApiResponse.<List<AppointmentResponse>>builder()
-                .result(appointmentService.getMyAppointment())
-                .build();
-    }
-    @PutMapping("/cancel")
-    public ApiResponse<AppointmentResponse> cancelMyAppointment(){
-        return ApiResponse.<AppointmentResponse>builder()
-                .result(appointmentService.cancelMyAppointment())
+    public ApiResponse<PageResponse<AppointmentResponse>> getMyAppointments(
+            @RequestParam(value = "page", required = false, defaultValue = "1") int page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") int size
+    ){
+        return ApiResponse.<PageResponse<AppointmentResponse>>builder()
+                .result(appointmentService.getMyAppointment(page, size))
                 .build();
     }
 
+
+    @GetMapping("/my-appointments/{appointmentId}")
+    public ApiResponse<AppointmentResponse> getOneAppointments(@PathVariable @Valid String appointmentId){
+        return ApiResponse.<AppointmentResponse>builder()
+                .result(appointmentService.getOneAppointment(appointmentId)).build();
+    }
+
+
+    @GetMapping("/my-upcoming-appointments")
+    public ApiResponse<PageResponse<AppointmentResponse>> getMyUpcomingAppointments(
+
+            @RequestParam(value = "page", required = false, defaultValue = "1") int page,
+            @RequestParam(value = "size", required = false, defaultValue = "5") int size
+    ){
+        return ApiResponse.<PageResponse<AppointmentResponse>>builder()
+                .result(appointmentService.getMyUpcomingAppointments(page, size))
+                .build();
+    }
+
+
+    @PutMapping("/cancel/{appointmentId}")
+    public ApiResponse<AppointmentResponse> cancelMyAppointment(@PathVariable @Valid String appointmentId){
+        return ApiResponse.<AppointmentResponse>builder()
+                .result(appointmentService.cancelMyAppointment(appointmentId))
+                .build();
+    }
+
+    @PutMapping("/update/{appointmentId}")
+    public ApiResponse<AppointmentResponse> updateMyAppointment(@PathVariable @Valid String appointmentId, @RequestBody @Valid AppointmentUpdateRequest appointmentUpdateRequest){
+        return ApiResponse.<AppointmentResponse>builder()
+                .result(appointmentService.updateMyAppointment(appointmentId, appointmentUpdateRequest))
+                .build();
+    }
 
     @DeleteMapping()
     public ApiResponse<Void> deleteMyAppointment(){
@@ -64,4 +89,35 @@ public class AppointmentController {
                 .message("Appointment deleted successfully")
                 .build();
     }
+
+    //DOCTOR ENDPOINT
+    @GetMapping()
+    public ApiResponse<PageResponse<AppointmentResponse>> getDoctorAppointment(
+            @RequestParam(value = "page", required = false, defaultValue = "1") int page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") int size
+    ){
+        return ApiResponse.<PageResponse<AppointmentResponse>>builder()
+                .result(appointmentService.getDoctorAppointment(page, size))
+                .build();
+    }
+
+
+    @GetMapping("/patient-upcoming-appointments/{patientId}")
+    public ApiResponse<PageResponse<AppointmentResponse>> getPatientUpcomingAppointments(
+
+            @RequestParam(value = "page", required = false, defaultValue = "1") int page,
+            @RequestParam(value = "size", required = false, defaultValue = "5") int size,
+            @PathVariable @Valid String patientId
+
+    ){
+        return ApiResponse.<PageResponse<AppointmentResponse>>builder()
+                .result(appointmentService.getOnePatientUpcomingAppointment(patientId, page, size))
+                .build();
+
+
+    }
+
+
+
+
  }

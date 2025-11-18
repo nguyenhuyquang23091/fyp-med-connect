@@ -18,7 +18,7 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
   jwt:
     singerKey : ${JWT_SIGNER_KEY:}
-    expired-duration: 4000 #second
+    expired-duration: 3600 #second
     refreshable-duration: 36000 # in second
   app:
     services:

@@ -11,11 +11,13 @@ import com.profile.vnpay.model.PaymentInfo;
 import com.profile.vnpay.repository.PaymentRepository;
 import com.profile.vnpay.repository.httpClient.ProfileClient;
 import com.profile.vnpay.util.VnPayUtil;
+import event.dto.PaymentCompletedEvent;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -31,10 +33,10 @@ import java.util.Map;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class PaymentService {
-    //add open feign to call profile service to get user own profile
     VnPayUtil vnPayUtil;
     ProfileClient profileClient;
     PaymentRepository paymentRepository;
+    KafkaTemplate<String, Object> kafkaTemplate;
 
     public PaymentResponse createVnPayment(PaymentRequest paymentRequest, HttpServletRequest httpServletRequest){
         //user Info
@@ -120,6 +122,21 @@ public class PaymentService {
             payment.setPaymentDate(Instant.from(formatter.parse(payDate)));
         }
         paymentRepository.save(payment);
+
+        if (paymentStatus == PaymentStatus.COMPLETED) {
+            PaymentCompletedEvent event = PaymentCompletedEvent.builder()
+                    .paymentId(payment.getId())
+                    .referenceId(payment.getReferenceId())
+                    .userId(payment.getUserid())
+                    .amount(payment.getAmount())
+                    .paymentStatus(PaymentStatus.COMPLETED.name())
+                    .paymentDate(payment.getPaymentDate())
+                    .vnpayTxnRef(payment.getVnpayTxnRef())
+                    .build();
+
+            kafkaTemplate.send("payment-completed-events", event);
+            log.info("Payment completed event sent for appointment: {}", payment.getReferenceId());
+        }
     }
 
 

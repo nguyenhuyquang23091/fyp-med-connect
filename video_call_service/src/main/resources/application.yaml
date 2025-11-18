@@ -7,6 +7,14 @@ socket:
   host: localhost
   port: 9095
 
+
+service:
+  internal:
+    # Authorization token for internal service calls (e.g., to notification-service)
+    # Should be set via environment variable: SERVICE_INTERNAL_AUTH_TOKEN
+    # Format: "Bearer <your-service-account-jwt-token>"
+    auth-token: ${SERVICE_INTERNAL_AUTH_TOKEN}
+
 spring:
   datasource:
     url: ${POSTGRES_URL}
@@ -20,7 +28,6 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
-
   # Kafka Consumer Configuration
   # Connects to Kafka broker and consumes appointment events
   kafka:
