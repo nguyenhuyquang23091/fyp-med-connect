@@ -4,6 +4,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
+import com.fyp.profile_service.dto.request.AdminUpdateUserProfileRequest;
 import com.fyp.profile_service.dto.request.ProfileCreationRequest;
 import com.fyp.profile_service.dto.request.ProfileUpdateRequest;
 import com.fyp.profile_service.dto.response.UserProfileResponse;
@@ -23,4 +24,10 @@ public interface UserProfileMapper {
     @Mapping(target = "avatar", ignore = true)
     @Mapping(target = "email", ignore = true)
     void updateProfile(@MappingTarget UserProfile userProfile, ProfileUpdateRequest profileUpdateRequest);
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "userId", ignore = true)
+    @Mapping(target = "avatar", ignore = true)
+    @Mapping(target = "email", ignore = true)
+    void adminUpdateProfile(@MappingTarget UserProfile userProfile, AdminUpdateUserProfileRequest profileUpdateRequest);
 }

@@ -39,3 +39,8 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer  # Deserialize JSON message bodies
       properties:
         spring.json.trusted.packages: "*"  # Trust all packages for JSON deserialization (use specific packages in production)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: info, health, prometheus, metrics

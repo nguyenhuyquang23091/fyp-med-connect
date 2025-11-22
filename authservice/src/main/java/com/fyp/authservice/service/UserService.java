@@ -113,7 +113,12 @@ public class UserService {
                 orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED)) ;
         Set<String> oldRoles = user.getRoles().stream().map(Role::getName).collect(Collectors.toSet());
         userMapper.adminUpdateUser(user, updateRequest);
-        user.setPassword(passwordEncoder.encode(updateRequest.getPassword()));
+
+        if(updateRequest.getPassword() != null && !updateRequest.getPassword().isBlank()){
+            user.setPassword(passwordEncoder.encode(updateRequest.getPassword()));
+
+        }
+
         var roles = roleRepository.findAllById(updateRequest.getRoles());
         user.setRoles(new HashSet<>(roles));
 
@@ -143,7 +148,10 @@ public class UserService {
         User user = userRepository.findById(id).
                 orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED)) ;
         userMapper.updateUser(user, updateRequest);
-        user.setPassword(passwordEncoder.encode(updateRequest.getPassword()));
+        if(updateRequest.getPassword() != null && !updateRequest.getPassword().isEmpty()){
+            user.setPassword(passwordEncoder.encode(updateRequest.getPassword()));
+
+        }
         return userMapper.toUserResponse(userRepository.save(user));
     }
 

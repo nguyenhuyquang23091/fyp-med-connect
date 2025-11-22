@@ -1,6 +1,7 @@
 package com.profile.api_gateway.configuration;
 
 
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
@@ -9,9 +10,8 @@ import org.springframework.context.annotation.Configuration;
 import reactor.core.publisher.Mono;
 
 @Configuration
+@Slf4j
 public class RateLimiterConfiguration {
-
-    private static final Logger log = LoggerFactory.getLogger(RateLimiterConfiguration.class);
 
     @Bean
     public KeyResolver keyResolver() {

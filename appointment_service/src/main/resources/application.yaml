@@ -36,4 +36,10 @@ microservices:
     video-call-service:
         url: ${VIDEO_CALL_SERVICE_URL:http://localhost:8095}
 
+management:
+    endpoints:
+        web:
+            exposure:
+                include: info, health, prometheus, metrics
+
 

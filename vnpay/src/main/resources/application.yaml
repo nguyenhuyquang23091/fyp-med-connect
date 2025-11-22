@@ -1,3 +1,5 @@
+
+
 socket:
   host: localhost
   port: 9093
@@ -24,6 +26,8 @@ spring:
 
 server:
   port: 8083
+  servlet:
+    context-path: /payment
 
 payment:
   vnPay:
@@ -39,3 +43,9 @@ payment:
 microservices:
   profile-service:
     url: ${PROFILE_SERVICE_URL:http://localhost:8081}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: info, health, prometheus, metrics

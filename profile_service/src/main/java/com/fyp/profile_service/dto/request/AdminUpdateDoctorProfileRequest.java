@@ -1,5 +1,7 @@
 package com.fyp.profile_service.dto.request;
 
+import java.util.List;
+
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -8,8 +10,15 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class UserUpdateRequest {
-    String username;
-    String email;
-    String password;
+public class AdminUpdateDoctorProfileRequest {
+
+    String residency;
+
+    Integer yearsOfExperience;
+
+    String bio;
+
+    Boolean isAvailable;
+
+    List<String> languages;
 }

@@ -18,6 +18,7 @@ public class SecurityConfig {
     public String[] PUBLIC_ENDPOINT = {
            "/email/send",
            "/ws/**",
+            "/actuator"
     };
 
     private final CustomJwtDecoder customJwtDecoder;
@@ -29,7 +30,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.authorizeHttpRequests(request ->
-                request.requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINT).permitAll()
+                request.requestMatchers("/actuator/**").permitAll()  // Allow Prometheus scraping
+                        .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINT).permitAll()
                         .requestMatchers(HttpMethod.GET, "/ws/**").permitAll()
                         .anyRequest()
                         .authenticated());

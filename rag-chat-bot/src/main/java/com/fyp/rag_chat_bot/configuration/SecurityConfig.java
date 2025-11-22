@@ -17,7 +17,8 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
-    private final String[] PUBLIC_ENDPOINTS = {"/ai/generate"};
+    private final String[] PUBLIC_ENDPOINTS = {"/ai/generate",
+            "/actuator"};
 
     private final CustomJwtDecoder customJwtDecoder;
 
@@ -30,6 +31,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.authorizeHttpRequests(request -> request.requestMatchers(HttpMethod.OPTIONS, "/**")
                 .permitAll()
+                .requestMatchers("/actuator/**").permitAll()  // Allow Prometheus scraping
                 .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS)
                 .permitAll()
                 .anyRequest()

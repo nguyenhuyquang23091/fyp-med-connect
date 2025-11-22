@@ -17,6 +17,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
     public String[] PUBLIC_ENDPOINT = {
             "/create",
+            "/actuator"
 
     };
 
@@ -29,7 +30,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.authorizeHttpRequests(request ->
-                request.requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINT).permitAll()
+                request.requestMatchers("/actuator/**").permitAll()  // Allow Prometheus scraping
+                        .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINT).permitAll()
                         .requestMatchers(HttpMethod.GET,  "/payment/vnpay-return" ).permitAll()
                         .anyRequest()
                         .authenticated());

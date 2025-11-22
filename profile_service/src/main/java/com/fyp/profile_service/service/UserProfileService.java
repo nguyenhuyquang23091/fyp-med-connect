@@ -10,6 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fyp.profile_service.dto.request.AdminUpdateUserProfileRequest;
 import com.fyp.profile_service.dto.request.ProfileCreationRequest;
 import com.fyp.profile_service.dto.request.ProfileUpdateRequest;
 import com.fyp.profile_service.dto.response.UserProfileResponse;
@@ -45,11 +46,6 @@ public class UserProfileService {
         UserProfile userProfile = userProfileMapper.toUserProfile(request);
 
         userProfile = userProfileRepository.save(userProfile);
-        log.info(
-                "Created User Profile with User id : {} and email : {} with gender : {}",
-                userProfile.getUserId(),
-                userProfile.getEmail(),
-                userProfile.getGender());
         return userProfileMapper.toUserProfileResponse(userProfile);
     }
 
@@ -164,5 +160,18 @@ public class UserProfileService {
     @CacheEvict(cacheNames = "PROFILE_CACHE", key = "#id")
     public void deleteProfile(String id) {
         userProfileRepository.deleteById(id);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    public UserProfileResponse adminUpdateOneUserProfile(String userId, AdminUpdateUserProfileRequest request) {
+        UserProfile userProfile = userProfileRepository
+                .findByUserId(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        userProfileMapper.adminUpdateProfile(userProfile, request);
+
+        userProfileRepository.save(userProfile);
+
+        return userProfileMapper.toUserProfileResponse(userProfile);
     }
 }

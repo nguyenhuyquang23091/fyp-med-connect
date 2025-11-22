@@ -37,3 +37,8 @@ logging:
     org.elasticsearch : DEBUG
     org.apache.kafka: INFO
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: info, health, prometheus, metrics

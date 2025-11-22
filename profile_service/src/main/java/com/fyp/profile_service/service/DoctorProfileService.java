@@ -13,10 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fyp.event.dto.DoctorProfileEntityType;
-import com.fyp.profile_service.dto.request.DoctorExperienceUpdateRequest;
-import com.fyp.profile_service.dto.request.DoctorProfileUpdateRequest;
-import com.fyp.profile_service.dto.request.DoctorServiceRequest;
-import com.fyp.profile_service.dto.request.DoctorSpecialtyRequest;
+import com.fyp.profile_service.dto.request.*;
 import com.fyp.profile_service.dto.response.DoctorExperienceResponse;
 import com.fyp.profile_service.dto.response.DoctorProfileResponse;
 import com.fyp.profile_service.dto.response.DoctorServiceResponse;
@@ -65,13 +62,6 @@ public class DoctorProfileService {
     DoctorProfileCdcProducer cdcProducer;
     DoctorProfileCdcMapper cdcMapper;
 
-    /**
-     * Updates the base doctor profile information.
-     * Evicts cache after update to ensure consistency.
-     *
-     * @param request the doctor profile update request
-     * @return DoctorProfileResponse containing the updated profile
-     */
     @PreAuthorize("hasRole('DOCTOR')")
     @Transactional
     @CacheEvict(
@@ -79,43 +69,9 @@ public class DoctorProfileService {
             key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()")
     public DoctorProfileResponse updateBaseDoctorProfile(DoctorProfileUpdateRequest request) {
         String userId = ProfileServiceUtil.getCurrentUserId();
-        DoctorProfile doctorProfile = doctorProfileRepository
-                .findByUserId(userId)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-
-        Map<String, Object> beforeState = cdcMapper.toProfileMap(doctorProfile);
-
-        doctorProfile.setBio(request.getBio());
-        doctorProfile.setResidency(request.getResidency());
-        doctorProfile.setYearsOfExperience(request.getYearsOfExperience());
-        doctorProfile.setIsAvailable(request.getIsAvailable());
-        doctorProfile.setLanguages(request.getLanguages());
-
-        doctorProfileRepository.save(doctorProfile);
-
-        Map<String, Object> afterState = cdcMapper.toProfileMap(doctorProfile);
-
-        cdcProducer.publishUpdate(
-                DoctorProfileEntityType.PROFILE,
-                beforeState,
-                afterState,
-                doctorProfile.getId(),
-                doctorProfile.getUserId());
-
-        UserProfile basicUserProfile = userProfileRepository
-                .findByUserId(userId)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-
-        return doctorProfileMapper.toResponse(doctorProfile, basicUserProfile);
+        return updateBaseDoctorProfile(userId, request);
     }
 
-    /**
-     * Adds a service to the doctor's profile.
-     * Evicts cache after addition to ensure consistency.
-     *
-     * @param request the doctor service request
-     * @return DoctorServiceResponse containing the added service
-     */
     @PreAuthorize("hasRole('DOCTOR')")
     @Transactional
     @CacheEvict(
@@ -152,14 +108,6 @@ public class DoctorProfileService {
         return serviceRelationshipMapper.toResponse(relationship);
     }
 
-    /**
-     * Updates a service in the doctor's profile.
-     * Evicts cache after update to ensure consistency.
-     *
-     * @param relationshipId the relationship ID to update
-     * @param request the doctor service request
-     * @return DoctorServiceResponse containing the updated service
-     */
     @PreAuthorize("hasRole('DOCTOR')")
     @Transactional
     @CacheEvict(
@@ -209,12 +157,6 @@ public class DoctorProfileService {
         return serviceRelationshipMapper.toResponse(relationship);
     }
 
-    /**
-     * Removes a service from the doctor's profile.
-     * Evicts cache after removal to ensure consistency.
-     *
-     * @param relationshipId the relationship ID to remove
-     */
     @PreAuthorize("hasRole('DOCTOR')")
     @Transactional
     @CacheEvict(
@@ -255,13 +197,6 @@ public class DoctorProfileService {
                 .toList();
     }
 
-    /**
-     * Adds a specialty to the doctor's profile.
-     * Evicts cache after addition to ensure consistency.
-     *
-     * @param request the doctor specialty request
-     * @return DoctorSpecialtyResponse containing the added specialty
-     */
     @PreAuthorize("hasRole('DOCTOR')")
     @Transactional
     @CacheEvict(
@@ -302,14 +237,6 @@ public class DoctorProfileService {
         return specialtyRelationshipMapper.toResponse(relationship);
     }
 
-    /**
-     * Updates a specialty in the doctor's profile.
-     * Evicts cache after update to ensure consistency.
-     *
-     * @param relationshipId the relationship ID to update
-     * @param request the doctor specialty request
-     * @return DoctorSpecialtyResponse containing the updated specialty
-     */
     @PreAuthorize("hasRole('DOCTOR')")
     @Transactional
     @CacheEvict(
@@ -367,12 +294,6 @@ public class DoctorProfileService {
         return specialtyRelationshipMapper.toResponse(relationship);
     }
 
-    /**
-     * Removes a specialty from the doctor's profile.
-     * Evicts cache after removal to ensure consistency.
-     *
-     * @param relationshipId the relationship ID to remove
-     */
     @PreAuthorize("hasRole('DOCTOR')")
     @Transactional
     @CacheEvict(
@@ -413,14 +334,6 @@ public class DoctorProfileService {
                 .toList();
     }
 
-    /**
-     * Updates experience metadata for the doctor's profile.
-     * Evicts cache after update to ensure consistency.
-     *
-     * @param experienceId the experience ID to update
-     * @param request the doctor experience update request
-     * @return DoctorExperienceResponse containing the updated experience
-     */
     @PreAuthorize("hasRole('DOCTOR')")
     @Transactional
     @CacheEvict(
@@ -457,12 +370,6 @@ public class DoctorProfileService {
                 .toList();
     }
 
-    /**
-     * Retrieves the doctor profile for the authenticated doctor.
-     * Cached for performance - doctor profiles are read frequently but change infrequently.
-     *
-     * @return DoctorProfileResponse containing the doctor's profile
-     */
     @PreAuthorize("hasRole('DOCTOR')")
     @Cacheable(
             value = "DOCTOR_PROFILE_CACHE",
@@ -502,13 +409,6 @@ public class DoctorProfileService {
                 .toList();
     }
 
-    /**
-     * Retrieves a specific doctor's profile by userId.
-     * CRITICAL: Cached for performance - called by appointment service on every appointment creation.
-     *
-     * @param userId the doctor's user ID
-     * @return DoctorProfileResponse containing the doctor's profile
-     */
     @PreAuthorize("hasAuthority('VIEW_DOCTOR_PROFILES')")
     @Cacheable(value = "DOCTOR_PROFILE_CACHE", key = "#userId")
     public DoctorProfileResponse getOneDoctorProfile(String userId) {
@@ -521,6 +421,39 @@ public class DoctorProfileService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         log.info("Fetching doctor profile from database for userId: {}", userId);
+        return doctorProfileMapper.toResponse(doctorProfile, basicUserProfile);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @CacheEvict(value = "DOCTOR_PROFILE_CACHE", key = "#userId")
+    public DoctorProfileResponse adminUpdateOneDoctorProfile(String userId, DoctorProfileUpdateRequest request) {
+        return updateBaseDoctorProfile(userId, request);
+    }
+
+    private DoctorProfileResponse updateBaseDoctorProfile(String userId, DoctorProfileUpdateRequest request) {
+        DoctorProfile doctorProfile = doctorProfileRepository
+                .findByUserId(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        Map<String, Object> beforeState = cdcMapper.toProfileMap(doctorProfile);
+
+        doctorProfileMapper.updateDoctorBaseProfile(doctorProfile, request);
+
+        doctorProfileRepository.save(doctorProfile);
+
+        Map<String, Object> afterState = cdcMapper.toProfileMap(doctorProfile);
+
+        cdcProducer.publishUpdate(
+                DoctorProfileEntityType.PROFILE,
+                beforeState,
+                afterState,
+                doctorProfile.getId(),
+                doctorProfile.getUserId());
+
+        UserProfile basicUserProfile = userProfileRepository
+                .findByUserId(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
         return doctorProfileMapper.toResponse(doctorProfile, basicUserProfile);
     }
 }

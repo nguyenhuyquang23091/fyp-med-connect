@@ -15,5 +15,74 @@ scrape_configs:
         labels:
           application : 'Identity Service'
 
+  - job_name: 'appointment-service'
+    metrics_path: '/appointment/actuator/prometheus'
+    scrape_interval: 3s
+    static_configs:
+      - targets: [ 'host.docker.internal:8084' ]
+        labels:
+          application: 'Appointment Service'
 
- #remember to add configuration for other services too
+
+  - job_name: 'file-service'
+    metrics_path: '/file/actuator/prometheus'
+    scrape_interval: 3s
+    static_configs:
+      - targets: [ 'host.docker.internal:8086' ]
+        labels:
+          application: 'File Service'
+
+
+  - job_name: 'notification-service'
+    metrics_path: '/notifications/actuator/prometheus'
+    scrape_interval: 3s
+    static_configs:
+      - targets: [ 'host.docker.internal:8085' ]
+        labels:
+          application: 'Notification Service'
+
+  - job_name: 'profile-service'
+    metrics_path: '/profile/actuator/prometheus'
+    scrape_interval: 3s
+    static_configs:
+      - targets: [ 'host.docker.internal:8081' ]
+        labels:
+          application: 'Profile Service'
+
+
+  - job_name: 'chatbot-service'
+    metrics_path: '/chatbot/actuator/prometheus'
+    scrape_interval: 3s
+    static_configs:
+      - targets: [ 'host.docker.internal:8082' ]
+        labels:
+          application: 'ChatBot Service'
+
+
+  - job_name: 'search-service'
+    metrics_path: '/search/actuator/prometheus'
+    scrape_interval: 3s
+    static_configs:
+      - targets: [ 'host.docker.internal:8087' ]
+        labels:
+          application: 'Search Service'
+
+
+  - job_name: 'video-call-service'
+    metrics_path: '/video-call/actuator/prometheus'
+    scrape_interval: 3s
+    static_configs:
+      - targets: [ 'host.docker.internal:8095' ]
+        labels:
+          application: 'Video Call Service'
+
+  - job_name: 'vn-pay-service'
+    metrics_path: '/payment/actuator/prometheus'
+    scrape_interval: 3s
+    static_configs:
+      - targets: [ 'host.docker.internal:8083' ]
+        labels:
+          application: 'Payment Service'
+
+
+# remember to add configuration for other services too

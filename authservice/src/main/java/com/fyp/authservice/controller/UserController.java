@@ -38,7 +38,8 @@ public class UserController {
        var authentication =  SecurityContextHolder.getContext().getAuthentication();
        log.info("Email : {}", authentication.getName());
         authentication.getAuthorities()
-                .forEach(grantedAuthority -> log.info(grantedAuthority.getAuthority()));
+                .forEach(grantedAuthority ->
+                        log.info(grantedAuthority.getAuthority()));
        return ApiResponse.<List<User>>builder()
 
                .result(userService.getUsers())
@@ -60,7 +61,7 @@ public class UserController {
     UserResponse updateUser(@Valid @RequestBody UserUpdateRequest updateRequest){
        return userService.updateUser( updateRequest);
     }
-    @PutMapping("/{userId}")
+    @PatchMapping("/{userId}")
     UserResponse adminUpdateUser( @PathVariable String userId, @Valid @RequestBody AdminUpdateRequest updateRequest){
         return userService.adminUpdateUser(userId, updateRequest);
     }

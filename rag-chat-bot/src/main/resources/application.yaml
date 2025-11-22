@@ -52,4 +52,9 @@ logging:
     io:
       qdrant: DEBUG
     com.fyp.rag_chat_bot: DEBUG
-  ollama:
+management:
+  endpoints:
+    web:
+      exposure:
+        include: info, health, prometheus, metrics
+

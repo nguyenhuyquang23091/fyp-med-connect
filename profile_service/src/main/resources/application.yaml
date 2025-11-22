@@ -39,4 +39,9 @@ spring:
 app:
   services:
     file : http://localhost:8084
+management:
+  endpoints:
+    web:
+      exposure:
+        include: info, health, prometheus, metrics
 

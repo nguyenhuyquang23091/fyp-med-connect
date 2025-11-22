@@ -39,6 +39,15 @@ public class DoctorProfileController {
                 .build();
     }
 
+    @PatchMapping("/admin/{userId}/baseProfile")
+    public ApiResponse<DoctorProfileResponse> adminUpdateDoctorProfile(
+            @PathVariable @NotBlank(message = "User ID cannot be blank") String userId,
+            @Valid @RequestBody DoctorProfileUpdateRequest request) {
+        return ApiResponse.<DoctorProfileResponse>builder()
+                .result(doctorProfileService.adminUpdateOneDoctorProfile(userId, request))
+                .build();
+    }
+
     @GetMapping("/services")
     public ApiResponse<List<DoctorServiceResponse>> getMyServices() {
         return ApiResponse.<List<DoctorServiceResponse>>builder()

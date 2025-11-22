@@ -16,6 +16,8 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableMethodSecurity
 public class SecurityConfig {
     public String[] PUBLIC_ENDPOINT = {
+
+            "/actuator"
     };
 
     private final CustomJwtDecoder customJwtDecoder;
@@ -27,7 +29,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.authorizeHttpRequests(request ->
-                request.requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINT).permitAll()
+                request.requestMatchers("/actuator/**").permitAll()  // Allow Prometheus scraping
+                        .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINT).permitAll()
                         .anyRequest()
                         .authenticated());
         //disable csrf security

@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/payment")
 @RequiredArgsConstructor
 @FieldDefaults(level =  AccessLevel.PRIVATE, makeFinal = true)
 public class PaymentController {
