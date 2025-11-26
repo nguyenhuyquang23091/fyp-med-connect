@@ -2,6 +2,7 @@ package com.fyp.appointment_service.entity;
 
 import com.fyp.appointment_service.constant.AppointmentStatus;
 import com.fyp.appointment_service.constant.ConsultationType;
+import com.fyp.appointment_service.constant.PaymentMethod;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -40,6 +41,10 @@ public class AppointmentEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     ConsultationType consultationType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    PaymentMethod paymentMethod;
     Instant modifiedDate;
     BigDecimal prices;
 }

@@ -2,14 +2,24 @@ package com.fyp.video_call_service.service;
 
 
 import com.corundumstudio.socketio.SocketIOClient;
+import com.fyp.video_call_service.constant.SessionStatus;
 import com.fyp.video_call_service.dto.request.ICECandidateMessage;
 import com.fyp.video_call_service.dto.request.RoomRequest;
 import com.fyp.video_call_service.dto.request.WebRTCSignal;
+import com.fyp.video_call_service.entity.SessionVideoCall;
+import com.fyp.video_call_service.exceptions.AppException;
+import com.fyp.video_call_service.exceptions.ErrorCode;
+import com.fyp.video_call_service.repository.SessionVideoCallRepository;
+import com.fyp.video_call_service.repository.httpCLient.AppointmentFeignClient;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.net.Socket;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 
 @Service
@@ -19,6 +29,8 @@ import org.springframework.stereotype.Service;
 public class VideoCallService {
 
     RoomStateService roomStateService;
+    SessionVideoCallRepository sessionVideoCallRepository;
+    AppointmentFeignClient appointmentFeignClient;
 
 
     public void handleJoinRoom(SocketIOClient client, RoomRequest roomRequest){
@@ -37,7 +49,15 @@ public class VideoCallService {
 
         } else if (connectedClient == 1) {
 
-            client.joinRoom(room);
+            SessionVideoCall session = sessionVideoCallRepository.findByRoomId(room)
+                    .orElseThrow(() -> new AppException(ErrorCode.SESSION_NOT_EXISTED));
+
+            if (session.getActualStartTime() == null) {
+                session.setActualStartTime(LocalDateTime.now());
+                sessionVideoCallRepository.save(session);
+            }
+
+                client.joinRoom(room);
             client.sendEvent("joined", room);
             roomStateService.addUserToRoom(clientSessionId, room);
 
@@ -98,6 +118,54 @@ public class VideoCallService {
         client.getNamespace().getRoomOperations(room)
                 .sendEvent("userLeft", clientSessionId);
     }
+
+    public void handleEndCall(SocketIOClient socketIOClient, RoomRequest roomRequest){
+        String roomId = roomRequest.getRoom();
+        String sessionId = socketIOClient.getSessionId().toString();
+
+        log.info("=== END CALL EVENT RECEIVED ===");
+        log.info("SessionId: {}", sessionId);
+        log.info("RoomId: {}", roomId);
+
+        SessionVideoCall sessionVideoCall =
+                sessionVideoCallRepository.findByRoomId(roomId).orElseThrow(() -> new AppException(ErrorCode.SESSION_NOT_EXISTED));
+
+        log.info("Found session in DB - Current status: {}, Start time: {}",
+                sessionVideoCall.getSessionStatus(),
+                sessionVideoCall.getActualStartTime());
+
+        sessionVideoCall.setSessionStatus(SessionStatus.COMPLETED);
+        sessionVideoCall.setActualEndTime(LocalDateTime.now());
+
+        if(sessionVideoCall.getActualStartTime() != null ){
+            long minute = ChronoUnit.MINUTES.between(sessionVideoCall.getActualStartTime(),
+                    sessionVideoCall.getActualEndTime());
+
+            sessionVideoCall.setDuration((int) minute);
+            log.info("Calculated duration: {} minutes", minute);
+        } else {
+            log.warn("No start time recorded for session - duration will be null");
+        }
+
+        SessionVideoCall savedSession = sessionVideoCallRepository.save(sessionVideoCall);
+        log.info("Session saved successfully - New status: {}, End time: {}, Duration: {}",
+                savedSession.getSessionStatus(),
+                savedSession.getActualEndTime(),
+                savedSession.getDuration());
+
+        appointmentFeignClient.markAppointmentComplete(savedSession.getAppointmentId());
+        log.info("Appointment {} marked as COMPLETED", savedSession.getAppointmentId());
+
+        broadcastToOther(socketIOClient, roomId, "callEnded", null);
+        log.info("Broadcasted 'callEnded' event to other participants in room {}", roomId);
+
+        roomStateService.cleanupRoom(roomId);
+        log.info("Room cleanup completed for roomId: {}", roomId);
+        log.info("=== END CALL HANDLING COMPLETED ===");
+
+    }
+
+
 
 
     private void broadcastToOther(SocketIOClient sender,

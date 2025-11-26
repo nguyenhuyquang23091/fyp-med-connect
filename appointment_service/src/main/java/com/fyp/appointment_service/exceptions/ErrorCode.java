@@ -30,8 +30,13 @@ public enum ErrorCode {
     INVALID_SPECIALTY_SELECTION(2007, "The selected specialty is not offered by this doctor", HttpStatus.BAD_REQUEST),
     APPOINTMENT_NOT_OWNED(2008, "You do not have permission to modify this appointment", HttpStatus.FORBIDDEN),
     APPOINTMENT_ALREADY_CANCELLED(2009, "Appointment is already cancelled", HttpStatus.BAD_REQUEST),
-    APPOINTMENT_ALREADY_COMPLETED(2010, "Cannot cancel a completed appointment", HttpStatus.BAD_REQUEST)
-    ;
+    APPOINTMENT_ALREADY_COMPLETED(2010, "Cannot cancel a completed appointment", HttpStatus.BAD_REQUEST),
+
+PAYMENT_METHOD_NOT_SUPPORTED(2011, "This payment method is not supported", HttpStatus.BAD_REQUEST)
+
+
+
+            ;
     private int code;
     private HttpStatusCode statusCode;
     private String message;

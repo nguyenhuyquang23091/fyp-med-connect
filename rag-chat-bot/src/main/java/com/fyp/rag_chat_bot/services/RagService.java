@@ -85,6 +85,7 @@ public class RagService {
 
         return ChatBotResponse.builder()
                 .content(content)
+                .role("assistant")
                 .conversationId(conversationId)
                 .build();
 
@@ -121,7 +122,6 @@ public class RagService {
 
         // Get all messages from chat_memory table
         List<Message> allMessages = chatMemoryRepository.findByConversationId(conversationId);
-
         // Convert to 0-based indexing
         int start = (page - 1) * size;
 
@@ -134,6 +134,8 @@ public class RagService {
         int end = Math.min(start + size, allMessages.size());
         List<Message> pagedMessages = allMessages.subList(Math.max(0, start), end);
 
+
+
         return PageResponse.<ChatBotResponse>builder()
                 .currentPage(page)
                 .totalPages((int) Math.ceil((double) allMessages.size() / size))
@@ -142,6 +144,7 @@ public class RagService {
                 .data(pagedMessages.stream()
                         .map(message -> ChatBotResponse.builder()
                                 .content(message.getText())
+                                .role(message.getMessageType().getValue())
                                 .conversationId(conversationId)
                                 .build())
                         .toList())

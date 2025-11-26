@@ -1,6 +1,6 @@
 package com.profile.vnpay.constant;
 
 
-public interface PaymentType {
+public interface PaymentServiceType {
     String APPOINTMENT = "APPOINTMENT";
 }

@@ -42,7 +42,6 @@ public class PaymentController {
         }
         // After our service handle VnPAY URL. It will emit an event to web socket where FE will register
         //to the same socket and listen to payment changes from BE side
-
         PaymentResponse paymentResponse = paymentService.handleVnPayReturnUrl(params);
         socketIOServer.getBroadcastOperations().sendEvent("payment:update", paymentResponse);
 

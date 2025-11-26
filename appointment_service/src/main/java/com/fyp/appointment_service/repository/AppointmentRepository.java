@@ -27,6 +27,7 @@ public interface AppointmentRepository extends JpaRepository<AppointmentEntity, 
 
     Optional<AppointmentEntity> findByUserIdAndId(String userId, String id);
 
+
     Page<AppointmentEntity> findByUserIdAndAppointmentDateTimeAfterAndAppointmentStatus
             (String userId,
              LocalDateTime

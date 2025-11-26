@@ -8,6 +8,7 @@ import java.util.List;
 
 import com.fyp.appointment_service.constant.AppointmentStatus;
 import com.fyp.appointment_service.constant.ConsultationType;
+import com.fyp.appointment_service.constant.PaymentMethod;
 import com.fyp.appointment_service.dto.request.AppointmentNotificationRequest;
 import com.fyp.appointment_service.dto.request.AppointmentUpdateRequest;
 import com.fyp.appointment_service.dto.request.PaymentRequest;
@@ -91,28 +92,51 @@ public class AppointmentService {
                 .services(serviceName)
                 .prices(price)
                 .consultationType(request.getConsultationType())
+                .paymentMethod(request.getPaymentMethod())
                 .appointmentStatus(AppointmentStatus.UPCOMING)
                 .createdDate(Instant.now())
                 .build();
 
         appointmentRepository.save(appointmentEntity);
 
-        PaymentRequest paymentRequest = PaymentRequest.builder()
-                .referenceId(appointmentEntity.getId())
-                .amount(price)
-                .build();
-
-        PaymentResponse paymentResponse = vnPayClient.createVnPayment(paymentRequest).getResult();
-        String paymentUrl  = paymentResponse.getPaymentUrl();
-        AppointmentResponse appointmentResponse =  appointmentMapper.toAppointmentRespone(appointmentEntity);
-        appointmentResponse.setPaymentURL(paymentUrl);
+         AppointmentResponse appointmentResponse = handlePaymentMethod(appointmentEntity, price);
 
         sendKafkaEvent(appointmentEntity);
 
         return  appointmentResponse;
+
     }
 
+    private AppointmentResponse handlePaymentMethod(AppointmentEntity appointmentEntity, BigDecimal price){
 
+
+            //using switch for future expansion of payment method
+
+        AppointmentResponse appointmentResponse =   appointmentMapper.toAppointmentRespone(appointmentEntity);
+
+        switch (appointmentEntity.getPaymentMethod()) {
+            case VN_PAY -> {
+                PaymentRequest paymentRequest = PaymentRequest.builder()
+                        .referenceId(appointmentEntity.getId())
+                        .amount(price)
+                        .build();
+
+                PaymentResponse paymentResponse = vnPayClient.createVnPayment(paymentRequest).getResult();
+                appointmentResponse.setPaymentURL(paymentResponse.getPaymentUrl());
+            }
+            case IN_CASH -> {
+                    //do nothing
+            }
+
+            default -> {
+
+                throw new AppException(ErrorCode.PAYMENT_METHOD_NOT_SUPPORTED);
+            }
+        }
+
+
+        return  appointmentResponse;
+    }
 
 
 
@@ -133,26 +157,37 @@ public class AppointmentService {
         }
     }
 
+    public AppointmentResponse markAppointmentAsComplete(String appointmentId){
+
+        AppointmentEntity appointment = appointmentRepository
+                .findById(appointmentId)
+                .orElseThrow(() -> new AppException(ErrorCode.APPOINTMENT_NOT_FOUND));
+
+        validateAppointmentStatus(appointment);
+
+        appointment.setAppointmentStatus(AppointmentStatus.COMPLETED);
+        appointment.setModifiedDate(Instant.now());
+
+        AppointmentEntity updatedAppointment = appointmentRepository.save(appointment);
+
+        return appointmentMapper.toAppointmentRespone(updatedAppointment);
+    }
+
     public AppointmentResponse cancelMyAppointment(String appointmentId){
+
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         String userId = authentication.getName();
-        // Fetch the appointment
-        AppointmentEntity appointment = appointmentRepository
-                .findByUserIdAndId(userId, appointmentId).orElseThrow(() -> new AppException(ErrorCode.APPOINTMENT_NOT_FOUND));
 
-        // Check if already cancelled
-        if (appointment.getAppointmentStatus() == AppointmentStatus.CANCELLED) {
-            throw new AppException(ErrorCode.APPOINTMENT_ALREADY_CANCELLED);
-        }
-        // Check if already completed
-        if (appointment.getAppointmentStatus() == AppointmentStatus.COMPLETED) {
-            throw new AppException(ErrorCode.APPOINTMENT_ALREADY_COMPLETED);
-        }
+        AppointmentEntity appointment = appointmentRepository
+                .findByUserIdAndId(userId, appointmentId)
+                .orElseThrow(() -> new AppException(ErrorCode.APPOINTMENT_NOT_FOUND));
+
+        validateAppointmentStatus(appointment);
+
         // Update status to CANCELLED
         appointment.setAppointmentStatus(AppointmentStatus.CANCELLED);
         appointment.setModifiedDate(Instant.now());
         AppointmentEntity updatedAppointment = appointmentRepository.save(appointment);
-
         // Send notification to doctor about appointment cancellation
         AppointmentNotificationRequest notification =
                 AppointmentNotificationRequest.cancelledAppointment(updatedAppointment, updatedAppointment.getDoctorId());
@@ -161,8 +196,20 @@ public class AppointmentService {
         return appointmentMapper.toAppointmentRespone(updatedAppointment);
     }
 
+    private AppointmentEntity validateAppointmentStatus(AppointmentEntity appointment){
 
-    
+
+        if (appointment.getAppointmentStatus() == AppointmentStatus.CANCELLED) {
+            throw new AppException(ErrorCode.APPOINTMENT_ALREADY_CANCELLED);
+        }
+        if (appointment.getAppointmentStatus() == AppointmentStatus.COMPLETED) {
+            throw new AppException(ErrorCode.APPOINTMENT_ALREADY_COMPLETED);
+        }
+
+        return appointment;
+    }
+
+
     public PageResponse<AppointmentResponse> getMyAppointment(int page, int size){
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         String userId = authentication.getName();
@@ -206,13 +253,22 @@ public class AppointmentService {
 
     }
 
+    //used for both doctor, patient
     public AppointmentResponse getOneAppointment(String appointmentId){
         //Add get one doctor profile vao
         // use for displaying doctor avatar
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         String userId = authentication.getName();
+
         AppointmentEntity appointment = appointmentRepository
-                .findByUserIdAndId(userId, appointmentId).orElseThrow(() -> new AppException(ErrorCode.APPOINTMENT_NOT_FOUND));
+                .findById(appointmentId)
+                .orElseThrow(() -> new AppException(ErrorCode.APPOINTMENT_NOT_FOUND));
+
+
+        if (!appointment.getUserId().equals(userId) && !appointment.getDoctorId().equals(userId)) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
         return  appointmentMapper.toAppointmentRespone(appointment);
 
     }
@@ -237,7 +293,9 @@ public class AppointmentService {
 
 
 
-    
+
+    //DOCTOR AUTHORITIES
+
     @PreAuthorize("hasRole('DOCTOR')")
     public PageResponse<AppointmentResponse> getDoctorAppointment(int page, int size){
         var authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -259,7 +317,6 @@ public class AppointmentService {
                 .build();
     }
 
-    //DOCTOR AUTHORITIES
     @PreAuthorize("hasRole('DOCTOR')")
     public PageResponse<AppointmentResponse> getOnePatientUpcomingAppointment(String userId, int page, int size){
         return getUpcomingAppointmentsByUserId(userId, page, size);

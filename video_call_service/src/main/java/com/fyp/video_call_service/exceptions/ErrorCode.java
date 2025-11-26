@@ -16,7 +16,7 @@ public enum ErrorCode {
     PASSWORD_INVALID(1003, "Password must be 8 characters long", HttpStatus.BAD_REQUEST),
 
     INVALID_KEY(1004, "Invalid message", HttpStatus.BAD_REQUEST),
-    USER_NOT_EXISTED(1005, "User is not existed", HttpStatus.NOT_FOUND),
+    SESSION_NOT_EXISTED(1005, "User is not existed", HttpStatus.NOT_FOUND),
     UNAUTHENTICATED(1006, "Unauthenticated", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED(1007, "You do not have permission", HttpStatus.FORBIDDEN),
 

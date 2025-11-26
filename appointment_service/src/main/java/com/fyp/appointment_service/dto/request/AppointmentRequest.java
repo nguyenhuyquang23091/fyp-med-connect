@@ -1,6 +1,7 @@
 package com.fyp.appointment_service.dto.request;
 
 import com.fyp.appointment_service.constant.ConsultationType;
+import com.fyp.appointment_service.constant.PaymentMethod;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -35,6 +36,10 @@ public class AppointmentRequest {
     @NotNull(message = "Service relationship ID is required")
     Long serviceRelationshipId;
 
+
     @NotNull(message = "Consultation type is required")
     ConsultationType consultationType;
+
+    @NotNull(message = "Payment method is required")
+    PaymentMethod paymentMethod;
 }

@@ -15,4 +15,5 @@ public interface SessionVideoCallRepository extends JpaRepository<SessionVideoCa
 
     Optional<List<SessionVideoCall>> findBySessionStatusAndScheduledStartTimeBefore(SessionStatus sessionStatus, LocalDateTime scheduledStartTimeBefore);
 
+    Optional<SessionVideoCall> findByRoomId(String roomId);
 }

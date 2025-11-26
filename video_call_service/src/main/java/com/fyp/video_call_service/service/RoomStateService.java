@@ -72,6 +72,11 @@ public class RoomStateService {
         return roomId;
     }
 
+    public void cleanupRoom(String roomId) {
+        roomCreatorMap.remove(roomId);
+    }
+
+
 
     public boolean roomExists(String roomId) {
         return roomCreatorMap.containsKey(roomId);

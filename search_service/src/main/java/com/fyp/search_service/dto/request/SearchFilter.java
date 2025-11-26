@@ -64,7 +64,7 @@ public class SearchFilter {
     @Builder.Default
     @Min(value = 0, message = "Page number cannot be negative")
     @Max(value = 10000, message = "Page number cannot exceed 10000")
-    Integer page = 0;
+    Integer page = 1;
 
     @Builder.Default
     @Min(value = 1, message = "Page size must be at least 1")

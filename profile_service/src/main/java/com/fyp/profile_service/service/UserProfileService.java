@@ -3,9 +3,13 @@ package com.fyp.profile_service.service;
 import java.util.List;
 import java.util.Set;
 
+import com.fyp.profile_service.dto.response.PageResponse;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -49,7 +53,9 @@ public class UserProfileService {
         return userProfileMapper.toUserProfileResponse(userProfile);
     }
 
-    @CachePut(value = "PROFILE_CACHE", key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()")
+    @Caching(
+            put = {@CachePut(value = "PROFILE_CACHE", key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()")},
+            evict = {@CacheEvict(value = "DOCTOR_PROFILE_CACHE", key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()")})
     public UserProfileResponse updateUserProfile(ProfileUpdateRequest request) {
         String userId = ProfileServiceUtil.getCurrentUserId();
         log.info("Userid is {}", userId);
@@ -69,7 +75,10 @@ public class UserProfileService {
         return userProfileMapper.toUserProfileResponse(userProfile);
     }
 
-    @CachePut(value = "PROFILE_CACHE", key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()")
+    @Caching(
+            put = {@CachePut(value = "PROFILE_CACHE", key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()")},
+            evict = {@CacheEvict(value = "DOCTOR_PROFILE_CACHE", key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()")}
+          )
     public UserProfileResponse updateUserAvatar(MultipartFile file) {
         String userId = ProfileServiceUtil.getCurrentUserId();
         var userProfile = userProfileRepository
@@ -77,6 +86,7 @@ public class UserProfileService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         String oldAvatarUrl = userProfile.getAvatar();
+
         if (oldAvatarUrl != null && !oldAvatarUrl.isEmpty()) {
             try {
                 fileService.deleteMedia(oldAvatarUrl);
@@ -95,7 +105,9 @@ public class UserProfileService {
         return userProfileMapper.toUserProfileResponse(userProfile);
     }
 
-    @CachePut(value = "PROFILE_CACHE", key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()")
+    @Caching(
+            put = {@CachePut(value = "PROFILE_CACHE", key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()")},
+            evict = {@CacheEvict(value = "DOCTOR_PROFILE_CACHE", key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()")})
     public UserProfileResponse deleteUserAvatar() {
         String userId = ProfileServiceUtil.getCurrentUserId();
         var userProfile = userProfileRepository
@@ -120,7 +132,7 @@ public class UserProfileService {
     // DOCTOR
 
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('VIEW_PATIENT_RECORDS')")
-    public List<UserProfileResponse> getAllPatientProfile() {
+    public PageResponse<UserProfileResponse> getAllPatientProfile(int page, int size) {
         log.info("Fetching all patient profiles via cross-service call");
 
         // Step 1: Get all user IDs with PATIENT role from AuthService
@@ -129,23 +141,42 @@ public class UserProfileService {
 
         if (patientUserIds == null || patientUserIds.isEmpty()) {
             log.warn("No patients found in AuthService");
-            return List.of();
+
         }
 
         log.info("Found {} patients from AuthService", patientUserIds.size());
 
-        // Step 2: Fetch profiles by user IDs from ProfileService
-        List<UserProfile> patientProfileList = userProfileRepository.findAllByUserIdIn(patientUserIds);
+        Pageable pageable = PageRequest.of(page - 1, size);
 
-        return patientProfileList.stream()
-                .map(userProfileMapper::toUserProfileResponse)
-                .toList();
+        var allPatientProfile = userProfileRepository.findAllByUserIdIn(patientUserIds, pageable);
+
+        return PageResponse.<UserProfileResponse>builder()
+                .currentPage(page)
+                .pageSize(allPatientProfile.getSize())
+                .totalPages(allPatientProfile.getTotalPages())
+                .totalElements(allPatientProfile.getTotalElements())
+                .data(allPatientProfile.getContent().stream().map(userProfileMapper::toUserProfileResponse).toList())
+                .build();
     }
 
     // ADMIN
     @PreAuthorize("hasRole('ADMIN')")
-    public List<UserProfile> getAllUserProfile() {
-        return userProfileRepository.findAll();
+    public PageResponse<UserProfileResponse> getAllUserProfile(int page, int size) {
+
+
+       Pageable pageable  = PageRequest.of(page - 1 , size);
+
+       var allUserProfiles =  userProfileRepository.findAllBy(pageable);
+
+       return PageResponse.<UserProfileResponse>builder()
+               .currentPage(page)
+               .pageSize(allUserProfiles.getSize())
+               .totalPages(allUserProfiles.getTotalPages())
+               .totalElements(allUserProfiles.getTotalElements())
+               .data(allUserProfiles.getContent().stream().map(userProfileMapper::toUserProfileResponse).toList())
+               .build();
+
+
     }
 
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('VIEW_PATIENT_RECORDS')")
@@ -157,12 +188,19 @@ public class UserProfileService {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @CacheEvict(cacheNames = "PROFILE_CACHE", key = "#id")
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "PROFILE_CACHE", key = "#id"),
+            @CacheEvict(cacheNames = "DOCTOR_PROFILE_CACHE", key = "#id")
+    })
     public void deleteProfile(String id) {
         userProfileRepository.deleteById(id);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "PROFILE_CACHE", key = "#userId"),
+            @CacheEvict(cacheNames = "DOCTOR_PROFILE_CACHE", key = "#userId")
+    })
     public UserProfileResponse adminUpdateOneUserProfile(String userId, AdminUpdateUserProfileRequest request) {
         UserProfile userProfile = userProfileRepository
                 .findByUserId(userId)

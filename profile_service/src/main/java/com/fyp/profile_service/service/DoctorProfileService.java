@@ -5,19 +5,18 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.fyp.profile_service.dto.response.*;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fyp.event.dto.DoctorProfileEntityType;
 import com.fyp.profile_service.dto.request.*;
-import com.fyp.profile_service.dto.response.DoctorExperienceResponse;
-import com.fyp.profile_service.dto.response.DoctorProfileResponse;
-import com.fyp.profile_service.dto.response.DoctorServiceResponse;
-import com.fyp.profile_service.dto.response.DoctorSpecialtyResponse;
 import com.fyp.profile_service.entity.*;
 import com.fyp.profile_service.exceptions.AppException;
 import com.fyp.profile_service.exceptions.ErrorCode;
@@ -389,24 +388,37 @@ public class DoctorProfileService {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    public List<DoctorProfileResponse> getAllDoctorProfile() {
+    public PageResponse<DoctorProfileResponse> getAllDoctorProfile(int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
 
-        List<DoctorProfile> doctorProfiles = doctorProfileRepository.findAll();
+        // Step 1: Paginate DoctorProfiles
+        var paginatedDoctorProfiles = doctorProfileRepository.findAllBy(pageable);
 
-        Set<String> doctorProfileUserId =
-                doctorProfiles.stream().map(DoctorProfile::getUserId).collect(Collectors.toSet());
+        // Step 2: Extract userIds from paginated results
+        Set<String> doctorUserIds = paginatedDoctorProfiles.getContent().stream()
+                .map(DoctorProfile::getUserId)
+                .collect(Collectors.toSet());
 
-        List<UserProfile> baseDoctorProfiles = userProfileRepository.findAllByUserIdIn(doctorProfileUserId);
+        // Step 3: Fetch corresponding UserProfiles (non-paginated, just the needed ones)
+        List<UserProfile> baseDoctorProfiles = userProfileRepository.findAllByUserIdIn(doctorUserIds);
 
-        Map<String, UserProfile> baseDoctorProfileHashMap =
-                baseDoctorProfiles.stream().collect(Collectors.toMap(UserProfile::getUserId, profile -> profile));
+        // Step 4: Create lookup map
+        Map<String, UserProfile> baseDoctorProfileHashMap = baseDoctorProfiles.stream()
+                .collect(Collectors.toMap(UserProfile::getUserId, profile -> profile));
 
-        return doctorProfiles.stream()
-                .map(doctorProfile -> {
-                    UserProfile userProfile = baseDoctorProfileHashMap.get(doctorProfile.getUserId());
-                    return doctorProfileMapper.toResponse(doctorProfile, userProfile);
-                })
-                .toList();
+        // Step 5: Build response with paginated DoctorProfiles
+        return PageResponse.<DoctorProfileResponse>builder()
+                .currentPage(page)
+                .pageSize(paginatedDoctorProfiles.getSize())
+                .totalElements(paginatedDoctorProfiles.getTotalElements())
+                .totalPages(paginatedDoctorProfiles.getTotalPages())
+                .data(paginatedDoctorProfiles.getContent().stream()
+                        .map(doctorProfile -> {
+                            UserProfile userProfile = baseDoctorProfileHashMap.get(doctorProfile.getUserId());
+                            return doctorProfileMapper.toResponse(doctorProfile, userProfile);
+                        })
+                        .toList())
+                .build();
     }
 
     @PreAuthorize("hasAuthority('VIEW_DOCTOR_PROFILES')")

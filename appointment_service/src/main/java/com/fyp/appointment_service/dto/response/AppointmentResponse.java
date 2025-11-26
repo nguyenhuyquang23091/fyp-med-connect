@@ -2,6 +2,7 @@ package com.fyp.appointment_service.dto.response;
 
 import com.fyp.appointment_service.constant.AppointmentStatus;
 import com.fyp.appointment_service.constant.ConsultationType;
+import com.fyp.appointment_service.constant.PaymentMethod;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -15,6 +16,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class AppointmentResponse {
+
     String id;
     String userId;
     String doctorId;
@@ -27,11 +29,14 @@ public class AppointmentResponse {
 
     LocalDateTime appointmentDateTime;
 
+
+
     String specialty;
     String services;
 
     AppointmentStatus appointmentStatus;
     ConsultationType consultationType;
+    PaymentMethod paymentMethod;
 
     BigDecimal prices;
 

@@ -2,6 +2,8 @@ package com.fyp.profile_service.repository;
 
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,4 +15,6 @@ public interface DoctorProfileRepository extends Neo4jRepository<DoctorProfile, 
     Optional<DoctorProfile> findByUserId(String userId);
 
     boolean existsByUserId(String userId);
+
+    Page<DoctorProfile> findAllBy(Pageable pageable);
 }

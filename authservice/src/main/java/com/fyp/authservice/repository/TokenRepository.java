@@ -24,9 +24,13 @@ public class TokenRepository {
     static final String REFRESH_TOKEN_KEY_PREFIX = "user:refresh:";
 
 
+
+
     //prefixes for token blacklisting
     static final String ACCESS_BLACKLIST_PREFIX = "blacklist:access:";
     static final String REFRESH_BLACKLIST_PREFIX = "blacklist:refresh:";
+
+
 
     @NonFinal
     @Value("${spring.jwt.expired-duration}")
@@ -37,18 +41,16 @@ public class TokenRepository {
     long jwtRefreshExpiration;
 
     public void storeToken(String userId, String accessToken, String refreshToken, long accessTokenExpiration, long refreshTokenExpiration){
-        //Store access
         String accessKey = ACCESS_TOKEN_PREFIX + userId;
         stringRedisTemplate.opsForValue().set(accessKey, accessToken);
         stringRedisTemplate.expire(accessKey, accessTokenExpiration, TimeUnit.SECONDS);
 
-        //Store refreshToken
         String refreshKey = REFRESH_TOKEN_KEY_PREFIX + userId;
         stringRedisTemplate.opsForValue().set(refreshKey, refreshToken);
         stringRedisTemplate.expire(refreshKey, refreshTokenExpiration, TimeUnit.SECONDS);
     }
 
-    public String getAccessToken(String userId){
+    String getAccessToken(String userId){
         String accessKey = ACCESS_TOKEN_PREFIX + userId;
         return getToken(accessKey);
     }
@@ -59,14 +61,10 @@ public class TokenRepository {
         return getToken(refreshKey);
     }
 
-
     private String getToken(String key){
-        // StringRedisTemplate always returns String, no casting needed
         return stringRedisTemplate.opsForValue().get(key);
     }
 
-
-    //remove all Token when users log out successfully
     public void removeAllToken(String userId){
         String accessToken = getAccessToken(userId);
         String refreshToken = getRefreshToken(userId);
@@ -86,7 +84,6 @@ public class TokenRepository {
         }
     }
 
-    //remove accessToken if only refresh
     public void removeAccessToken(String userId ){
             String accessToken = getAccessToken(userId);
             String key = ACCESS_TOKEN_PREFIX + userId;
@@ -96,26 +93,23 @@ public class TokenRepository {
             }
 
     }
-    public void blackListAccessToken(String accessToken, long jwtExpiration){
+
+    private void blackListAccessToken(String accessToken, long jwtExpiration){
         String key = ACCESS_BLACKLIST_PREFIX  + accessToken;
         stringRedisTemplate.opsForValue().set(key, "blacklisted");
         stringRedisTemplate.expire(key, jwtExpiration, TimeUnit.SECONDS);
-
-
     }
 
-    public void blackListRefreshToken(String refreshToken, long jwtRefreshExpiration){
+    private void blackListRefreshToken(String refreshToken, long jwtRefreshExpiration){
         String key = REFRESH_BLACKLIST_PREFIX + refreshToken;
         stringRedisTemplate.opsForValue().set(key, "blacklisted");
         stringRedisTemplate.expire(key, jwtRefreshExpiration, TimeUnit.SECONDS);
     }
-    //check whether token is blackListed or not
 
     public boolean isAccessTokenBlackListed(String accessToken){
         String key  = ACCESS_BLACKLIST_PREFIX + accessToken;
         return Boolean.TRUE.equals(stringRedisTemplate.hasKey(key));
     }
-
 
     public boolean isRefreshTokenBlackListed(String refreshToken){
         String key = REFRESH_BLACKLIST_PREFIX + refreshToken;

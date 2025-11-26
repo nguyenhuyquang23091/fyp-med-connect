@@ -29,7 +29,6 @@ public final class QueryBuilder {
         addFuzzyTextSearch(boolQuery , searchFilter.getTerm());
         addBooleanFilters(boolQuery, searchFilter);
         addRangeFilter(boolQuery, searchFilter);
-
         return buildSearchRequest(boolQuery, searchFilter);
     }
 
@@ -42,7 +41,7 @@ public final class QueryBuilder {
         builder.query(query);
 
         // Pagination
-        int from = searchFilter.getPage() * searchFilter.getSize();
+        int from = (searchFilter.getPage() - 1) * searchFilter.getSize();
         builder.from(from);
         builder.size(searchFilter.getSize());
 
@@ -247,7 +246,6 @@ public final class QueryBuilder {
         builder.index("doctor_profiles");
         builder.query(Query.of(q -> q.bool(boolQuery.build())));
         builder.size(Math.min(limit, 10));
-        // Reason: Fetch firstName and lastName separately as fullName doesn't exist in Elasticsearch document
         builder.source(src -> src.filter(f -> f
                         .includes("doctorProfileId", "firstName", "lastName", "residency", "avatar",
                                 "specialties.specialtyName", "services.serviceName",

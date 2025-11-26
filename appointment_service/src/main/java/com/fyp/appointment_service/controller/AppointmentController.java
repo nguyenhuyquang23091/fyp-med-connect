@@ -90,8 +90,9 @@ public class AppointmentController {
                 .build();
     }
 
+
     //DOCTOR ENDPOINT
-    @GetMapping()
+    @GetMapping("/get-doctor-appointments")
     public ApiResponse<PageResponse<AppointmentResponse>> getDoctorAppointment(
             @RequestParam(value = "page", required = false, defaultValue = "1") int page,
             @RequestParam(value = "size", required = false, defaultValue = "10") int size

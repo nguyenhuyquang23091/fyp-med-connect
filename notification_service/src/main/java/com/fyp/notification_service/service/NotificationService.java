@@ -108,10 +108,6 @@ public class NotificationService {
     }
 
 
-    //future scalability, send mail when user book appointment/payment
-
-
-
     public NotificationResponse markAsRead(String notificationId){
         Notification notification =
                 notificationRepository.findById(notificationId).orElseThrow(() -> new AppException(ErrorCode.NOTIFICATION_NOT_EXIST));
@@ -160,7 +156,6 @@ public class NotificationService {
         String roomName = "user_" + recipientUserId;
 
         socketIOServer.getRoomOperations(roomName).sendEvent("notification_update", statusUpdate);
-
         return notificationMapper.toNotificationResponse(notificationOpt);
     }
 }

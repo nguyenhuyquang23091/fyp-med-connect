@@ -2,7 +2,7 @@ package com.profile.vnpay.service;
 
 
 import com.profile.vnpay.constant.PaymentStatus;
-import com.profile.vnpay.constant.PaymentType;
+import com.profile.vnpay.constant.PaymentServiceType;
 import com.profile.vnpay.dto.request.PaymentRequest;
 import com.profile.vnpay.dto.response.UserProfileResponse;
 import com.profile.vnpay.dto.response.PaymentResponse;
@@ -51,7 +51,7 @@ public class PaymentService {
         BigDecimal amount = paymentRequest.getAmount().multiply(BigDecimal.valueOf(100));
         log.info("Current amount is {}", amount);
         String clientIpAddress = VnPayUtil.getIpAddress(httpServletRequest);
-        String txnRef = PaymentType.APPOINTMENT + "_" + userId + "_" + VnPayUtil.getRandomNumber(8);
+        String txnRef = PaymentServiceType.APPOINTMENT + "_" + userId + "_" + VnPayUtil.getRandomNumber(8);
 
         Payment payment = Payment.builder()
                 .userid(userId)

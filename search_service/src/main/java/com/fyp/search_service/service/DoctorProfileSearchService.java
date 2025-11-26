@@ -215,7 +215,9 @@ public class DoctorProfileSearchService {
         }
     }
 
+
     public PageResponse<DoctorProfileResponse> findAllDoctorProfile(int page, int size ){
+        // Reason: Convert 1-based page to 0-based index for Spring Data
         Pageable pageable = PageRequest.of(page - 1 , size);
 
         Page<DoctorProfile> doctorProfiles = doctorProfileRepository.findAll(pageable);
@@ -223,8 +225,9 @@ public class DoctorProfileSearchService {
         List<DoctorProfileResponse> doctorProfileResponses =
                 doctorProfiles.getContent().stream().map(doctorProfileSearchMapper::toDoctorProfileResponse).toList();
 
+        // Reason: Return 1-based page number to maintain consistent API contract with client
         return  PageResponse.<DoctorProfileResponse>builder()
-                .currentPage(doctorProfiles.getNumber())
+                .currentPage(page)
                 .pageSize(doctorProfiles.getSize())
                 .totalPages(doctorProfiles.getTotalPages())
                 .totalElements(doctorProfiles.getTotalElements())

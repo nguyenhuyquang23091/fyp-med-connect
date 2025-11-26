@@ -2,6 +2,7 @@ package com.fyp.profile_service.controller;
 
 import java.util.List;
 
+import com.fyp.profile_service.dto.response.PageResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 
@@ -13,7 +14,6 @@ import com.fyp.profile_service.dto.request.AdminUpdateUserProfileRequest;
 import com.fyp.profile_service.dto.request.ApiResponse;
 import com.fyp.profile_service.dto.request.ProfileUpdateRequest;
 import com.fyp.profile_service.dto.response.UserProfileResponse;
-import com.fyp.profile_service.entity.UserProfile;
 import com.fyp.profile_service.service.UserProfileService;
 
 import lombok.AccessLevel;
@@ -30,7 +30,7 @@ public class UserProfileController {
     UserProfileService userProfileService;
     // admin api
     @GetMapping("/users/{userId}")
-    public ApiResponse<UserProfileResponse> getProfile(
+    public ApiResponse<UserProfileResponse> getAllProfile(
             @PathVariable @NotBlank(message = "UserId ID cannot be blank") String userId) {
         return ApiResponse.<UserProfileResponse>builder()
                 .result(userProfileService.getOneUserProfile(userId))
@@ -38,9 +38,12 @@ public class UserProfileController {
     }
 
     @GetMapping("/users")
-    public ApiResponse<List<UserProfile>> getProfile() {
-        return ApiResponse.<List<UserProfile>>builder()
-                .result(userProfileService.getAllUserProfile())
+    public ApiResponse<PageResponse<UserProfileResponse>> getAllProfile(
+            @RequestParam(value = "page", required = false, defaultValue = "1") int page,
+            @RequestParam(value = "size", required = false, defaultValue = "20") int size
+    ) {
+        return ApiResponse.<PageResponse<UserProfileResponse>>builder()
+                .result(userProfileService.getAllUserProfile(page, size))
                 .build();
     }
 
@@ -59,10 +62,13 @@ public class UserProfileController {
 
     // doctor api
     @GetMapping("/users/get-all-patients")
-    public ApiResponse<List<UserProfileResponse>> getAllPatientProfile() {
-        return ApiResponse.<List<UserProfileResponse>>builder()
-                .result(userProfileService.getAllPatientProfile())
-                .build();
+    public ApiResponse<PageResponse<UserProfileResponse>> getAllPatientProfile(
+            @RequestParam(value = "page", required = false, defaultValue = "1") int page,
+            @RequestParam(value = "size", required = false, defaultValue = "20") int size
+    ) {
+       return ApiResponse.<PageResponse<UserProfileResponse>>builder()
+               .result(userProfileService.getAllPatientProfile(page, size))
+               .build();
     }
     // user api
     @PutMapping("/users/my-profile")

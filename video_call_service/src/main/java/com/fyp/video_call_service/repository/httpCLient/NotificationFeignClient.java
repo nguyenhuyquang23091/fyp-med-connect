@@ -19,6 +19,4 @@ public interface NotificationFeignClient {
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     ApiResponse<String> sendVideoCallNotification(@RequestBody VideoCallNotificationRequest request);
-
-
 }

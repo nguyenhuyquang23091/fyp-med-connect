@@ -11,6 +11,8 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ChatBotResponse {
+
+    String role;
     String conversationId;
     String content;
 

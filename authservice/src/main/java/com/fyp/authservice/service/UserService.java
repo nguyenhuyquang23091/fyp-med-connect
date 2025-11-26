@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import com.fyp.authservice.constant.PredefinedRole;
 import com.fyp.authservice.dto.request.AdminUpdateRequest;
+import com.fyp.authservice.dto.response.PageResponse;
 import com.fyp.authservice.entity.Role;
 import com.fyp.authservice.mapper.ProfileMapper;
 import com.fyp.authservice.mapper.RoleMapper;
@@ -13,6 +14,9 @@ import com.fyp.authservice.repository.RoleRepository;
 import com.fyp.authservice.repository.http_client.ProfileClient;
 import com.fyp.event.dto.NotificationEvent;
 import com.fyp.event.dto.UserRoleUpdateEvent;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -83,11 +87,21 @@ public class UserService {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    public List<User> getUsers(){
+    public PageResponse<UserResponse> getUsers(int page, int size){
         log.info("In method get users: ");
-        return userRepository.findAll();
-    }
 
+        Pageable pageable = PageRequest.of(page - 1, size);
+        var allUsers = userRepository.findAllBy(pageable);
+
+        return PageResponse.<UserResponse>builder()
+                .currentPage(page)
+                .pageSize(allUsers.getSize())
+                .totalPages(allUsers.getTotalPages())
+                .totalElements(allUsers.getTotalElements())
+                .data(allUsers.getContent().stream().map(userMapper::toUserResponse).toList())
+                .build();
+
+    }
     @PreAuthorize("hasRole('ADMIN')")
     public UserResponse getOneUser(String id){
         log.info("In method get one user ");

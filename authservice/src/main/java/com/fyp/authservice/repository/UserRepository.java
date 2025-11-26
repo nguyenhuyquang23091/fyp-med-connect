@@ -1,6 +1,8 @@
 package com.fyp.authservice.repository;
 
 import com.fyp.authservice.entity.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,4 +20,6 @@ public interface UserRepository extends JpaRepository<User, String> {
 
     @Query("SELECT u.id FROM User u JOIN u.roles r WHERE r.name= :roleName")
     Optional<List<String>> findUserIdByRole(@Param("roleName") String roleName);
+
+    Page<User> findAllBy(Pageable pageable);
 }

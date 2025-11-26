@@ -168,6 +168,12 @@ public class SocketIOConfiguration {
             videoCallService.handleLeaveRoom(client, data);
         });
 
+        //7 End Call
+
+        server.addEventListener("callEnded", RoomRequest.class, (client, data, ackRequest) -> {
+            videoCallService.handleEndCall(client, data);
+        });
+
         log.info("Registered {} WebRTC event listeners", 6);
     }
 

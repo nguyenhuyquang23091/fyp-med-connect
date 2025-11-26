@@ -5,6 +5,7 @@ import com.fyp.authservice.dto.request.AdminUpdateRequest;
 import com.fyp.authservice.dto.request.ApiResponse;
 import com.fyp.authservice.dto.request.UserCreationRequest;
 import com.fyp.authservice.dto.request.UserUpdateRequest;
+import com.fyp.authservice.dto.response.PageResponse;
 import com.fyp.authservice.dto.response.UserResponse;
 import com.fyp.authservice.entity.User;
 import com.fyp.authservice.service.UserService;
@@ -34,15 +35,17 @@ public class UserController {
     }
 
     @GetMapping
-    ApiResponse<List<User>> getUsers(){
+    ApiResponse<PageResponse<UserResponse>> getUsers(
+            @RequestParam(value = "page", required = false, defaultValue = "1") int page,
+            @RequestParam(value = "size", required = false, defaultValue = "20") int size
+    ){
        var authentication =  SecurityContextHolder.getContext().getAuthentication();
        log.info("Email : {}", authentication.getName());
         authentication.getAuthorities()
                 .forEach(grantedAuthority ->
                         log.info(grantedAuthority.getAuthority()));
-       return ApiResponse.<List<User>>builder()
-
-               .result(userService.getUsers())
+       return ApiResponse.<PageResponse<UserResponse>>builder()
+               .result(userService.getUsers(page, size))
                .build();
     }
 
