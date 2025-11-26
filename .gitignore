@@ -33,7 +33,6 @@ rag-chat-bot/collections/
 rag-chat-bot/aliases/
 rag-chat-bot/raft_state.json
 
-<<<<<<< HEAD
 # Environment variables - CRITICAL: Never commit these!
 **/.env
 .env
@@ -41,20 +40,6 @@ rag-chat-bot/raft_state.json
 .env.*
 !.env.example
 !.env.template
-
-# Build artifacts
-**/target/
-target/
-*.class
-*.jar
-*.war
-*.ear
-=======
-# Environment files - DO NOT COMMIT
-*.env
-.env
-.env.*
-!.env.example
 
 # Specific .env files in services
 appointment_service/src/main/resources/.env
@@ -70,4 +55,16 @@ video_call_service/src/main/resources/.env
 
 # Build output .env files
 **/target/classes/.env
->>>>>>> appointment_test
+
+# Build artifacts
+**/target/
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Log files
+logs/
+**/logs/
+*.log
