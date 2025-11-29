@@ -85,12 +85,7 @@ public class DoctorProfileCdcMapper {
         return map;
     }
 
-    /**
-     * Converts a DoctorExperienceRelationship to Map format for CDC events.
-     *
-     * @param relationship the experience relationship to convert
-     * @return Map representation of the experience relationship
-     */
+
     public Map<String, Object> toExperienceMap(DoctorExperienceRelationship relationship) {
         Map<String, Object> map = new HashMap<>();
 
@@ -126,24 +121,13 @@ public class DoctorProfileCdcMapper {
         return map;
     }
 
-    /**
-     * Creates a shallow Map for deletions (contains only relationship ID).
-     *
-     * @param relationshipId the ID of the deleted relationship
-     * @return Map containing the relationship ID
-     */
     public Map<String, Object> toDeletedMap(Long relationshipId) {
         Map<String, Object> map = new HashMap<>();
         map.put("relationshipId", relationshipId);
         return map;
     }
 
-    /**
-     * Creates a shallow Map for experience deletions (uses String ID).
-     *
-     * @param experienceId the ID of the deleted experience
-     * @return Map containing the experience ID
-     */
+
     public Map<String, Object> toDeletedExperienceMap(String experienceId) {
         Map<String, Object> map = new HashMap<>();
         map.put("experienceId", experienceId);

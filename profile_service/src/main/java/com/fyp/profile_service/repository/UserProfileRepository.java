@@ -19,6 +19,5 @@ public interface UserProfileRepository extends Neo4jRepository<UserProfile, Stri
 
     Page<UserProfile> findAllByUserIdIn(Set<String> userIds, Pageable pageable);
 
-
     Page<UserProfile> findAllBy(Pageable pageable);
 }

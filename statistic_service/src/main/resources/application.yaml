@@ -1,0 +1,55 @@
+server:
+  port: 8096
+  servlet:
+    context-path: /statistic
+
+socket:
+  host: localhost
+  port: 9096
+
+spring:
+  datasource:
+    url: ${POSTGRES_URL}
+    username: ${POSTGRES_USERNAME}
+    password: ${POSTGRES_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  kafka:
+    bootstrap-servers: localhost:9094
+    consumer:
+      group-id: statistic-service
+      auto-offset-reset: earliest  # Start from earliest message if no offset exists (latest = skip old messages)
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer  # Deserialize message keys
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer  # Deserialize JSON message bodies
+      properties:
+        spring.json.trusted.packages: "*"  # Trust all packages for JSON deserialization (use specific packages in production)
+        spring.json.type.mapping: >
+          com.fyp.event.dto.UserEvent:event.dto.UserEvent,
+          event.dto.PaymentEvent:event.dto.PaymentEvent,
+          event.dto.AppointmentEvent:event.dto.AppointmentEvent
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  ai:
+    model:
+      chat: google-genai
+    google:
+      genai:
+        api-key: ${GOOGLE_API_KEY}
+        chat:
+          options:
+            model: gemini-2.0-flash
+
+#      memory:
+#        repository:
+#          jdbc:
+#            initialize-schema: always
+

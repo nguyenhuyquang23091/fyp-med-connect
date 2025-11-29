@@ -14,7 +14,7 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class PaymentCompletedEvent {
+public class PaymentEvent {
     String paymentId;
     String referenceId;
     String userId;

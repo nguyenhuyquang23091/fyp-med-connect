@@ -1,13 +1,16 @@
 package com.fyp.search_service.service;
 
+import com.fyp.search_service.dto.request.SearchFilter;
 import com.fyp.search_service.dto.response.DoctorProfileResponse;
 import com.fyp.search_service.dto.response.PageResponse;
+import com.fyp.search_service.dto.response.SearchSuggestion;
 import com.fyp.search_service.entity.DoctorProfile;
 import com.fyp.search_service.exceptions.AppException;
 import com.fyp.search_service.exceptions.ErrorCode;
 import com.fyp.search_service.mapper.DoctorProfileCdcMapper;
 import com.fyp.search_service.mapper.DoctorProfileSearchMapper;
 import com.fyp.search_service.repository.DoctorProfileSearchRepository;
+import com.fyp.search_service.search.ElasticSearchProxy;
 import com.fyp.search_service.service.base.NestedEntityHandler;
 import jakarta.annotation.PostConstruct;
 import lombok.AccessLevel;
@@ -38,6 +41,7 @@ public class DoctorProfileSearchService {
     DoctorProfileCdcMapper doctorProfileCdcMapper;
     Map<String, NestedEntityHandler<?>> entityHandlers = new HashMap<>();
     DoctorProfileSearchMapper doctorProfileSearchMapper;
+    ElasticSearchProxy elasticSearchProxy;
 
 
     @PostConstruct
@@ -217,7 +221,6 @@ public class DoctorProfileSearchService {
 
 
     public PageResponse<DoctorProfileResponse> findAllDoctorProfile(int page, int size ){
-        // Reason: Convert 1-based page to 0-based index for Spring Data
         Pageable pageable = PageRequest.of(page - 1 , size);
 
         Page<DoctorProfile> doctorProfiles = doctorProfileRepository.findAll(pageable);
@@ -225,7 +228,6 @@ public class DoctorProfileSearchService {
         List<DoctorProfileResponse> doctorProfileResponses =
                 doctorProfiles.getContent().stream().map(doctorProfileSearchMapper::toDoctorProfileResponse).toList();
 
-        // Reason: Return 1-based page number to maintain consistent API contract with client
         return  PageResponse.<DoctorProfileResponse>builder()
                 .currentPage(page)
                 .pageSize(doctorProfiles.getSize())
@@ -234,6 +236,16 @@ public class DoctorProfileSearchService {
                 .data(doctorProfileResponses)
                 .build();
 
+    }
+
+    public PageResponse<DoctorProfileResponse> searchDoctorProfiles(SearchFilter filter) {
+        log.debug("Searching doctor profiles with filter: {}", filter);
+        return elasticSearchProxy.searchDoctorByTerm(filter);
+    }
+
+    public List<SearchSuggestion> getDoctorSuggestions(String term, int limit) {
+        log.debug("Getting doctor suggestions for term: {}, limit: {}", term, limit);
+        return elasticSearchProxy.getSuggestions(term, limit);
     }
 
 }

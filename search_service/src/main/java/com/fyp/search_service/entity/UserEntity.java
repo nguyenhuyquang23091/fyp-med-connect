@@ -5,6 +5,10 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldType;
+import org.springframework.data.elasticsearch.annotations.Mapping;
+
 
 @Getter
 @Setter
@@ -13,18 +17,19 @@ import org.springframework.data.elasticsearch.annotations.Document;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Document(indexName = "users")
+@Mapping(mappingPath = "static/user.json")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class UserEntity {
 
-    //update to delete later, since we use debezium to
-    // capture event changes in authservice, we don't have information about their profile
-
     @Id
     String id;
-    String fullName;
+
+    @Field(type = FieldType.Keyword)
     String email;
-    String phoneNumber;
+
+    @Field(type = FieldType.Keyword)
+    String username;
+
+    @Field(type = FieldType.Text)
     String role;
-    String specialization;
-    String profileImageUrl;
 }

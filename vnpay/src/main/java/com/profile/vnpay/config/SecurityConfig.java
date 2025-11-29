@@ -32,7 +32,7 @@ public class SecurityConfig {
         httpSecurity.authorizeHttpRequests(request ->
                 request.requestMatchers("/actuator/**").permitAll()  // Allow Prometheus scraping
                         .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINT).permitAll()
-                        .requestMatchers(HttpMethod.GET,  "/payment/vnpay-return" ).permitAll()
+                        .requestMatchers(HttpMethod.GET,  "/vnpay-return" ).permitAll()
                         .anyRequest()
                         .authenticated());
         //disable csrf security

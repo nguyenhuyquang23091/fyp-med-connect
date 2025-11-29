@@ -1,8 +1,5 @@
 package com.fyp.profile_service.controller;
 
-import java.util.List;
-
-import com.fyp.profile_service.dto.response.PageResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 
@@ -13,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fyp.profile_service.dto.request.AdminUpdateUserProfileRequest;
 import com.fyp.profile_service.dto.request.ApiResponse;
 import com.fyp.profile_service.dto.request.ProfileUpdateRequest;
+import com.fyp.profile_service.dto.response.PageResponse;
 import com.fyp.profile_service.dto.response.UserProfileResponse;
 import com.fyp.profile_service.service.UserProfileService;
 
@@ -40,8 +38,7 @@ public class UserProfileController {
     @GetMapping("/users")
     public ApiResponse<PageResponse<UserProfileResponse>> getAllProfile(
             @RequestParam(value = "page", required = false, defaultValue = "1") int page,
-            @RequestParam(value = "size", required = false, defaultValue = "20") int size
-    ) {
+            @RequestParam(value = "size", required = false, defaultValue = "20") int size) {
         return ApiResponse.<PageResponse<UserProfileResponse>>builder()
                 .result(userProfileService.getAllUserProfile(page, size))
                 .build();
@@ -64,11 +61,10 @@ public class UserProfileController {
     @GetMapping("/users/get-all-patients")
     public ApiResponse<PageResponse<UserProfileResponse>> getAllPatientProfile(
             @RequestParam(value = "page", required = false, defaultValue = "1") int page,
-            @RequestParam(value = "size", required = false, defaultValue = "20") int size
-    ) {
-       return ApiResponse.<PageResponse<UserProfileResponse>>builder()
-               .result(userProfileService.getAllPatientProfile(page, size))
-               .build();
+            @RequestParam(value = "size", required = false, defaultValue = "20") int size) {
+        return ApiResponse.<PageResponse<UserProfileResponse>>builder()
+                .result(userProfileService.getAllPatientProfile(page, size))
+                .build();
     }
     // user api
     @PutMapping("/users/my-profile")

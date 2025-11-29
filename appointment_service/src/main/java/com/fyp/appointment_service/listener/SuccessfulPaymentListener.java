@@ -8,7 +8,7 @@ import com.fyp.appointment_service.exceptions.AppException;
 import com.fyp.appointment_service.exceptions.ErrorCode;
 import com.fyp.appointment_service.repository.AppointmentRepository;
 import com.fyp.appointment_service.repository.httpCLient.NotificationFeignClient;
-import event.dto.PaymentCompletedEvent;
+import event.dto.PaymentEvent;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -30,7 +30,7 @@ public class SuccessfulPaymentListener {
     String serviceAuthToken;
 
     @KafkaListener(topics = "payment-completed-events", groupId = "appointment-service-group")
-    public void handlePaymentCompleted(PaymentCompletedEvent event) {
+    public void handlePaymentCompleted(PaymentEvent event) {
         log.info("Received payment completed event for appointment: {}", event.getReferenceId());
 
         String appointmentId = event.getReferenceId();

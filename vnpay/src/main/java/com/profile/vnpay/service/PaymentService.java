@@ -11,7 +11,7 @@ import com.profile.vnpay.model.PaymentInfo;
 import com.profile.vnpay.repository.PaymentRepository;
 import com.profile.vnpay.repository.httpClient.ProfileClient;
 import com.profile.vnpay.util.VnPayUtil;
-import event.dto.PaymentCompletedEvent;
+import event.dto.PaymentEvent;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +27,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -124,7 +125,8 @@ public class PaymentService {
         paymentRepository.save(payment);
 
         if (paymentStatus == PaymentStatus.COMPLETED) {
-            PaymentCompletedEvent event = PaymentCompletedEvent.builder()
+            PaymentEvent event = PaymentEvent.builder()
+                    .eventId(UUID.randomUUID().toString())
                     .paymentId(payment.getId())
                     .referenceId(payment.getReferenceId())
                     .userId(payment.getUserid())

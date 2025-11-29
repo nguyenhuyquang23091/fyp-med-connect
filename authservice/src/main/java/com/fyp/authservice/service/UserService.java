@@ -1,6 +1,7 @@
 package com.fyp.authservice.service;
 
 
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -13,6 +14,7 @@ import com.fyp.authservice.mapper.RoleMapper;
 import com.fyp.authservice.repository.RoleRepository;
 import com.fyp.authservice.repository.http_client.ProfileClient;
 import com.fyp.event.dto.NotificationEvent;
+import com.fyp.event.dto.UserEvent;
 import com.fyp.event.dto.UserRoleUpdateEvent;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -63,6 +65,20 @@ public class UserService {
         user.setRoles(roles);
         user = userRepository.save(user);
 
+
+        UserEvent userEvent =
+                UserEvent.builder()
+                        .eventId(UUID.randomUUID().toString())
+                        .userId(user.getId())
+                        .email(user.getEmail())
+                        .username(user.getUsername())
+                        .roles(user.getRoles().stream().map(Role::getName).collect(Collectors.toSet()))
+                        .createdAt(Instant.now().toString())
+                        .build();
+
+        kafkaTemplate.send("user-created", userEvent);
+        log.info("Published UserCreatedEvent for user: {}", user.getId());
+
         var userProfileRequest = profileMapper.toProfileCreationRequest(request);
         userProfileRequest.setUserId(user.getId());
         userProfileRequest.setEmail(user.getEmail());
@@ -80,6 +96,7 @@ public class UserService {
                         .param(param)
                 .templateCode(3L)
                 .build();
+
 
         //publish message to kafka
         kafkaTemplate.send("notification-delivery",  notificationEvent);

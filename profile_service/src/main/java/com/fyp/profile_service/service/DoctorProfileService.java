@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.fyp.profile_service.dto.response.*;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -17,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fyp.event.dto.DoctorProfileEntityType;
 import com.fyp.profile_service.dto.request.*;
+import com.fyp.profile_service.dto.response.*;
 import com.fyp.profile_service.entity.*;
 import com.fyp.profile_service.exceptions.AppException;
 import com.fyp.profile_service.exceptions.ErrorCode;
@@ -403,8 +403,8 @@ public class DoctorProfileService {
         List<UserProfile> baseDoctorProfiles = userProfileRepository.findAllByUserIdIn(doctorUserIds);
 
         // Step 4: Create lookup map
-        Map<String, UserProfile> baseDoctorProfileHashMap = baseDoctorProfiles.stream()
-                .collect(Collectors.toMap(UserProfile::getUserId, profile -> profile));
+        Map<String, UserProfile> baseDoctorProfileHashMap =
+                baseDoctorProfiles.stream().collect(Collectors.toMap(UserProfile::getUserId, profile -> profile));
 
         // Step 5: Build response with paginated DoctorProfiles
         return PageResponse.<DoctorProfileResponse>builder()
@@ -468,4 +468,8 @@ public class DoctorProfileService {
 
         return doctorProfileMapper.toResponse(doctorProfile, basicUserProfile);
     }
+
+
+
+
 }

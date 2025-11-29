@@ -28,7 +28,7 @@ public class SpecialtyController {
 
     SpecialtyService specialtyService;
 
-    @GetMapping
+    @GetMapping("/getAll")
     public ApiResponse<List<SpecialtyResponse>> getAllSpecialties() {
         return ApiResponse.<List<SpecialtyResponse>>builder()
                 .result(specialtyService.getAllSpecialties())

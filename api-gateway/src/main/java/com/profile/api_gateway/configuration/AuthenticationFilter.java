@@ -40,7 +40,9 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
             "/identity/users/registration",
             "/identity/auth/refresh",
             "/chatbot/ai/generate",
-            "/notification/email/send"
+            "/notification/email/send",
+            "/search/allDoctors",
+            "/profile/specialties/getAll"
     };
 
     @Value("${app.api-prefix}")

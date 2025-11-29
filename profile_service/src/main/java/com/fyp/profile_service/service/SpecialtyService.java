@@ -46,6 +46,8 @@ public class SpecialtyService {
         return specialtyMapper.toSpecialtyResponse(specialty);
     }
 
+
+
     public List<SpecialtyResponse> getAllSpecialties() {
         List<Specialty> specialties = specialtyRepository.findAll();
         return specialties.stream().map(specialtyMapper::toSpecialtyResponse).toList();

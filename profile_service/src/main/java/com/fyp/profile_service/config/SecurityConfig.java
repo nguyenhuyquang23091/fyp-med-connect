@@ -29,6 +29,7 @@ public class SecurityConfig {
                 .permitAll() // Allow Prometheus scraping
                 .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS)
                 .permitAll()
+                .requestMatchers(HttpMethod.GET, "/specialties/getAll").permitAll()
                 .anyRequest()
                 .authenticated());
         // disable csrf security

@@ -29,8 +29,6 @@ public class DoctorProfile {
     String doctorProfileId;
     String userId;
 
-
-
     // Basic doctor information
     String residency;
     Integer yearsOfExperience;

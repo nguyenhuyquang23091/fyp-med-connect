@@ -1,9 +1,7 @@
 package com.fyp.profile_service.service;
 
-import java.util.List;
 import java.util.Set;
 
-import com.fyp.profile_service.dto.response.PageResponse;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -17,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fyp.profile_service.dto.request.AdminUpdateUserProfileRequest;
 import com.fyp.profile_service.dto.request.ProfileCreationRequest;
 import com.fyp.profile_service.dto.request.ProfileUpdateRequest;
+import com.fyp.profile_service.dto.response.PageResponse;
 import com.fyp.profile_service.dto.response.UserProfileResponse;
 import com.fyp.profile_service.entity.UserProfile;
 import com.fyp.profile_service.exceptions.AppException;
@@ -54,8 +53,16 @@ public class UserProfileService {
     }
 
     @Caching(
-            put = {@CachePut(value = "PROFILE_CACHE", key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()")},
-            evict = {@CacheEvict(value = "DOCTOR_PROFILE_CACHE", key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()")})
+            put = {
+                @CachePut(
+                        value = "PROFILE_CACHE",
+                        key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()")
+            },
+            evict = {
+                @CacheEvict(
+                        value = "DOCTOR_PROFILE_CACHE",
+                        key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()")
+            })
     public UserProfileResponse updateUserProfile(ProfileUpdateRequest request) {
         String userId = ProfileServiceUtil.getCurrentUserId();
         log.info("Userid is {}", userId);
@@ -76,9 +83,16 @@ public class UserProfileService {
     }
 
     @Caching(
-            put = {@CachePut(value = "PROFILE_CACHE", key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()")},
-            evict = {@CacheEvict(value = "DOCTOR_PROFILE_CACHE", key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()")}
-          )
+            put = {
+                @CachePut(
+                        value = "PROFILE_CACHE",
+                        key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()")
+            },
+            evict = {
+                @CacheEvict(
+                        value = "DOCTOR_PROFILE_CACHE",
+                        key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()")
+            })
     public UserProfileResponse updateUserAvatar(MultipartFile file) {
         String userId = ProfileServiceUtil.getCurrentUserId();
         var userProfile = userProfileRepository
@@ -106,8 +120,16 @@ public class UserProfileService {
     }
 
     @Caching(
-            put = {@CachePut(value = "PROFILE_CACHE", key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()")},
-            evict = {@CacheEvict(value = "DOCTOR_PROFILE_CACHE", key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()")})
+            put = {
+                @CachePut(
+                        value = "PROFILE_CACHE",
+                        key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()")
+            },
+            evict = {
+                @CacheEvict(
+                        value = "DOCTOR_PROFILE_CACHE",
+                        key = "T(com.fyp.profile_service.utils.ProfileServiceUtil).getCurrentUserId()")
+            })
     public UserProfileResponse deleteUserAvatar() {
         String userId = ProfileServiceUtil.getCurrentUserId();
         var userProfile = userProfileRepository
@@ -141,7 +163,6 @@ public class UserProfileService {
 
         if (patientUserIds == null || patientUserIds.isEmpty()) {
             log.warn("No patients found in AuthService");
-
         }
 
         log.info("Found {} patients from AuthService", patientUserIds.size());
@@ -155,7 +176,9 @@ public class UserProfileService {
                 .pageSize(allPatientProfile.getSize())
                 .totalPages(allPatientProfile.getTotalPages())
                 .totalElements(allPatientProfile.getTotalElements())
-                .data(allPatientProfile.getContent().stream().map(userProfileMapper::toUserProfileResponse).toList())
+                .data(allPatientProfile.getContent().stream()
+                        .map(userProfileMapper::toUserProfileResponse)
+                        .toList())
                 .build();
     }
 
@@ -163,20 +186,19 @@ public class UserProfileService {
     @PreAuthorize("hasRole('ADMIN')")
     public PageResponse<UserProfileResponse> getAllUserProfile(int page, int size) {
 
+        Pageable pageable = PageRequest.of(page - 1, size);
 
-       Pageable pageable  = PageRequest.of(page - 1 , size);
+        var allUserProfiles = userProfileRepository.findAllBy(pageable);
 
-       var allUserProfiles =  userProfileRepository.findAllBy(pageable);
-
-       return PageResponse.<UserProfileResponse>builder()
-               .currentPage(page)
-               .pageSize(allUserProfiles.getSize())
-               .totalPages(allUserProfiles.getTotalPages())
-               .totalElements(allUserProfiles.getTotalElements())
-               .data(allUserProfiles.getContent().stream().map(userProfileMapper::toUserProfileResponse).toList())
-               .build();
-
-
+        return PageResponse.<UserProfileResponse>builder()
+                .currentPage(page)
+                .pageSize(allUserProfiles.getSize())
+                .totalPages(allUserProfiles.getTotalPages())
+                .totalElements(allUserProfiles.getTotalElements())
+                .data(allUserProfiles.getContent().stream()
+                        .map(userProfileMapper::toUserProfileResponse)
+                        .toList())
+                .build();
     }
 
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('VIEW_PATIENT_RECORDS')")
@@ -188,19 +210,21 @@ public class UserProfileService {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @Caching(evict = {
-            @CacheEvict(cacheNames = "PROFILE_CACHE", key = "#id"),
-            @CacheEvict(cacheNames = "DOCTOR_PROFILE_CACHE", key = "#id")
-    })
+    @Caching(
+            evict = {
+                @CacheEvict(cacheNames = "PROFILE_CACHE", key = "#id"),
+                @CacheEvict(cacheNames = "DOCTOR_PROFILE_CACHE", key = "#id")
+            })
     public void deleteProfile(String id) {
         userProfileRepository.deleteById(id);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @Caching(evict = {
-            @CacheEvict(cacheNames = "PROFILE_CACHE", key = "#userId"),
-            @CacheEvict(cacheNames = "DOCTOR_PROFILE_CACHE", key = "#userId")
-    })
+    @Caching(
+            evict = {
+                @CacheEvict(cacheNames = "PROFILE_CACHE", key = "#userId"),
+                @CacheEvict(cacheNames = "DOCTOR_PROFILE_CACHE", key = "#userId")
+            })
     public UserProfileResponse adminUpdateOneUserProfile(String userId, AdminUpdateUserProfileRequest request) {
         UserProfile userProfile = userProfileRepository
                 .findByUserId(userId)

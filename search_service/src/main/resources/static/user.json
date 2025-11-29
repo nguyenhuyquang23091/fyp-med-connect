@@ -1,0 +1,62 @@
+{
+  "settings": {
+    "analysis": {
+      "filter": {
+        "edge_ngram_filter": {
+          "type": "edge_ngram",
+          "min_gram": 2,
+          "max_gram": 20
+        }
+      },
+      "analyzer": {
+        "edge_ngram_analyzer": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter": [
+            "lowercase",
+            "edge_ngram_filter"
+          ]
+        },
+        "edge_ngram_search_analyzer": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter": [
+            "lowercase"
+          ]
+        }
+      }
+    },
+    "index": {
+      "number_of_shards": 1,
+      "number_of_replicas": 1,
+      "refresh_interval": "1s"
+    }
+  },
+  "mappings": {
+    "properties": {
+      "id": {
+        "type": "keyword"
+      },
+      "email": {
+        "type": "keyword"
+      },
+      "username": {
+        "type": "text",
+        "analyzer": "edge_ngram_analyzer",
+        "search_analyzer": "edge_ngram_search_analyzer",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          },
+          "raw": {
+            "type": "text",
+            "analyzer": "standard"
+          }
+        }
+      },
+      "role": {
+        "type": "keyword"
+      }
+    }
+  }
+}

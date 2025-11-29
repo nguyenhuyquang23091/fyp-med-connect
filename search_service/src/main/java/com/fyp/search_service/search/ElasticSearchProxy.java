@@ -2,17 +2,26 @@ package com.fyp.search_service.search;
 
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import com.fyp.search_service.constant.SuggestionType;
+import com.fyp.search_service.dto.request.AppointmentSearchFilter;
 import com.fyp.search_service.dto.request.SearchFilter;
+import com.fyp.search_service.dto.request.UserSearchFilter;
+import com.fyp.search_service.dto.response.AppointmentResponse;
 import com.fyp.search_service.dto.response.DoctorProfileResponse;
 import com.fyp.search_service.dto.response.PageResponse;
 import com.fyp.search_service.dto.response.SearchSuggestion;
+import com.fyp.search_service.dto.response.UserResponse;
+import com.fyp.search_service.entity.AppointmentEntity;
 import com.fyp.search_service.entity.DoctorProfile;
+import com.fyp.search_service.entity.UserEntity;
 import com.fyp.search_service.exceptions.AppException;
 import com.fyp.search_service.exceptions.ErrorCode;
+import com.fyp.search_service.mapper.AppointmentSearchMapper;
 import com.fyp.search_service.mapper.DoctorProfileSearchMapper;
+import com.fyp.search_service.mapper.UserSearchMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -32,6 +41,8 @@ public class ElasticSearchProxy {
 
     ElasticsearchClient elasticsearchClient;
     DoctorProfileSearchMapper doctorProfileSearchMapper;
+    AppointmentSearchMapper appointmentSearchMapper;
+    UserSearchMapper userSearchMapper;
 
     public PageResponse<DoctorProfileResponse> searchDoctorByTerm(SearchFilter searchFilter){
         try {
@@ -74,35 +85,14 @@ public class ElasticSearchProxy {
     }
 
     public List<SearchSuggestion> getSuggestions(String term, int limit) {
-        try {
-            log.debug("Executing suggestion query: term='{}', limit={}", term, limit);
-
-            SearchResponse<DoctorProfile> searchResponse =
-                    elasticsearchClient.search(QueryBuilder.buildSuggestiveSearch(term, limit), DoctorProfile.class);
-
-            Set<String> seenTexts = new HashSet<>();
-
-            List<SearchSuggestion> suggestions = searchResponse.hits().hits().stream()
-                    .map(hit -> extractSuggestionsFromHit(hit.source(), hit.score(), term, seenTexts))
-                    .flatMap(List::stream)
-                    .sorted(Comparator.comparing(SearchSuggestion::getScore).reversed())
-                    .limit(limit)
-                    .toList();
-
-            log.info("Suggestion query completed: term='{}', found {} unique suggestions", term, suggestions.size());
-
-            return suggestions;
-
-        } catch (IllegalArgumentException e) {
-            log.warn("Invalid suggestion query parameters: {}", e.getMessage());
-            throw new AppException(ErrorCode.INVALID_SEARCH_FILTER);
-        } catch (IOException e) {
-            log.error("ElasticSearch suggestion query failed for term '{}': {}", term, e.getMessage(), e);
-            throw handleElasticsearchException(e);
-        } catch (Exception e) {
-            log.error("Unexpected error during suggestion query: {}", e.getMessage(), e);
-            throw new AppException(ErrorCode.ELASTICSEARCH_QUERY_ERROR);
-        }
+        return executeGenericSuggestionSearch(
+                QueryBuilder.buildSuggestiveSearch(term, limit),
+                DoctorProfile.class,
+                "doctor",
+                term,
+                limit,
+                (doctor, score, seenTexts) -> extractSuggestionsFromHit(doctor, score, term, seenTexts)
+        );
     }
 
     private List<SearchSuggestion> extractSuggestionsFromHit(DoctorProfile doctor, Double score,
@@ -212,4 +202,168 @@ public class ElasticSearchProxy {
 
         return hasFirstName ? firstName : lastName;
     }
+
+    private <E, R> PageResponse<R> executeSearch(
+            SearchRequest searchRequest,
+            Class<E> entityClass,
+            String entityType,
+            int page,
+            int size,
+            Function<Hit<E>, R> mapper
+    ) {
+        try {
+            log.debug("Executing {} search with page={}, size={}", entityType, page, size);
+
+            SearchResponse<E> searchResponse = elasticsearchClient.search(searchRequest, entityClass);
+
+            long totalElements = searchResponse.hits().total().value();
+
+            List<R> results = searchResponse
+                    .hits()
+                    .hits().stream()
+                    .map(mapper)
+                    .toList();
+
+            int totalPages = (int) Math.ceil((double) totalElements / size);
+
+            log.info("{} search completed successfully. Found {} total results, returning page {} of {}",
+                    entityType, totalElements, page, totalPages);
+
+            return PageResponse.<R>builder()
+                    .currentPage(page)
+                    .pageSize(size)
+                    .totalPages(totalPages)
+                    .totalElements(totalElements)
+                    .data(results)
+                    .build();
+
+        } catch (IOException e) {
+            log.error("Elasticsearch {} search failed: {}", entityType, e.getMessage(), e);
+            throw handleElasticsearchException(e);
+        } catch (Exception e) {
+            log.error("Unexpected error during {} search: {}", entityType, e.getMessage(), e);
+            throw new AppException(ErrorCode.ELASTICSEARCH_QUERY_ERROR);
+        }
+    }
+
+    @FunctionalInterface
+    private interface SuggestionExtractor<T> {
+        List<SearchSuggestion> extract(T entity, Double score, Set<String> seenTexts);
+    }
+
+    private <T> List<SearchSuggestion> executeGenericSuggestionSearch(
+            SearchRequest searchRequest,
+            Class<T> entityClass,
+            String entityType,
+            String term,
+            int limit,
+            SuggestionExtractor<T> extractor
+    ) {
+        try {
+            log.debug("Executing {} suggestion query: term='{}', limit={}", entityType, term, limit);
+
+            SearchResponse<T> searchResponse = elasticsearchClient.search(searchRequest, entityClass);
+
+            Set<String> seenTexts = new HashSet<>();
+
+            List<SearchSuggestion> suggestions = searchResponse.hits().hits().stream()
+                    .map(hit -> extractor.extract(hit.source(), hit.score(), seenTexts))
+                    .flatMap(List::stream)
+                    .sorted(Comparator.comparing(SearchSuggestion::getScore).reversed())
+                    .limit(limit)
+                    .toList();
+
+            log.info("{} suggestion query completed: term='{}', found {} unique suggestions",
+                    entityType, term, suggestions.size());
+
+            return suggestions;
+
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid {} suggestion query parameters: {}", entityType, e.getMessage());
+            throw new AppException(ErrorCode.INVALID_SEARCH_FILTER);
+        } catch (IOException e) {
+            log.error("Elasticsearch {} suggestion query failed: {}", entityType, e.getMessage(), e);
+            throw handleElasticsearchException(e);
+        } catch (Exception e) {
+            log.error("Unexpected error during {} suggestion query: {}", entityType, e.getMessage(), e);
+            throw new AppException(ErrorCode.ELASTICSEARCH_QUERY_ERROR);
+        }
+    }
+
+    public PageResponse<AppointmentResponse> searchAppointments(AppointmentSearchFilter filter) {
+        return executeSearch(
+                QueryBuilder.buildAppointmentSearch(filter),
+                AppointmentEntity.class,
+                "appointment",
+                filter.getPage(),
+                filter.getSize(),
+                hit -> appointmentSearchMapper.toAppointmentResponse(hit.source())
+        );
+    }
+
+    public List<SearchSuggestion> getAppointmentSuggestions(String term, int limit, String userId, String doctorId) {
+        return executeGenericSuggestionSearch(
+                QueryBuilder.buildAppointmentSuggestiveSearch(term, limit, userId, doctorId),
+                AppointmentEntity.class,
+                "appointment",
+                term,
+                limit,
+                this::extractAppointmentSuggestions
+        );
+    }
+
+    private List<SearchSuggestion> extractAppointmentSuggestions(AppointmentEntity appointment, Double score, Set<String> seenTexts) {
+        if (appointment == null) return List.of();
+
+        float normalizedScore = normalizeScore(score);
+
+        return Stream.of(
+                createSuggestion(appointment.getPatientFullName(), SuggestionType.PATIENT_NAME, normalizedScore,
+                        appointment.getId(), appointment.getAppointmentStatus(), seenTexts),
+                createSuggestion(appointment.getDoctorFullName(), SuggestionType.DOCTOR_NAME, normalizedScore,
+                        appointment.getId(), appointment.getSpecialty(), seenTexts),
+                createSuggestion(appointment.getSpecialty(), SuggestionType.APPOINTMENT_SPECIALTY, normalizedScore * 0.9f,
+                        appointment.getId(), null, seenTexts)
+        )
+        .flatMap(List::stream)
+        .toList();
+    }
+
+    public PageResponse<UserResponse> searchUsers(UserSearchFilter filter) {
+        return executeSearch(
+                QueryBuilder.buildUserSearch(filter),
+                UserEntity.class,
+                "user",
+                filter.getPage(),
+                filter.getSize(),
+                hit -> userSearchMapper.toUserResponse(hit.source())
+        );
+    }
+
+    public List<SearchSuggestion> getUserSuggestions(String term, int limit) {
+        return executeGenericSuggestionSearch(
+                QueryBuilder.buildUserSuggestiveSearch(term, limit),
+                UserEntity.class,
+                "user",
+                term,
+                limit,
+                this::extractUserSuggestions
+        );
+    }
+
+    private List<SearchSuggestion> extractUserSuggestions(UserEntity user, Double score, Set<String> seenTexts) {
+        if (user == null) return List.of();
+
+        float normalizedScore = normalizeScore(score);
+
+        return Stream.of(
+                createSuggestion(user.getUsername(), SuggestionType.USER_NAME, normalizedScore,
+                        user.getId(), user.getRole(), seenTexts),
+                createSuggestion(user.getEmail(), SuggestionType.USER_EMAIL, normalizedScore * 0.8f,
+                        user.getId(), user.getRole(), seenTexts)
+        )
+        .flatMap(List::stream)
+        .toList();
+    }
+
 }

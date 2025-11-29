@@ -2,7 +2,6 @@ package com.fyp.profile_service.controller;
 
 import java.util.List;
 
-import com.fyp.profile_service.dto.response.*;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -11,6 +10,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import com.fyp.profile_service.dto.request.*;
+import com.fyp.profile_service.dto.response.*;
 import com.fyp.profile_service.service.DoctorProfileService;
 
 import lombok.AccessLevel;
@@ -132,11 +132,10 @@ public class DoctorProfileController {
     @GetMapping("/allDoctors")
     public ApiResponse<PageResponse<DoctorProfileResponse>> getAllDoctors(
             @RequestParam(value = "page", required = false, defaultValue = "1") int page,
-            @RequestParam(value = "size", required = false, defaultValue = "20") int size
-    ) {
-     return ApiResponse.<PageResponse<DoctorProfileResponse>>builder()
-             .result(doctorProfileService.getAllDoctorProfile(page, size))
-             .build();
+            @RequestParam(value = "size", required = false, defaultValue = "20") int size) {
+        return ApiResponse.<PageResponse<DoctorProfileResponse>>builder()
+                .result(doctorProfileService.getAllDoctorProfile(page, size))
+                .build();
     }
 
     @GetMapping("/getOneDoctorProfile/{doctorId}")

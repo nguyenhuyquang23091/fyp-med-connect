@@ -1,17 +1,24 @@
 package com.fyp.search_service.service;
 
 
+import com.fyp.search_service.dto.request.UserSearchFilter;
+import com.fyp.search_service.dto.response.PageResponse;
+import com.fyp.search_service.dto.response.SearchSuggestion;
+import com.fyp.search_service.dto.response.UserResponse;
 import com.fyp.search_service.entity.UserEntity;
 import com.fyp.search_service.exceptions.AppException;
 import com.fyp.search_service.exceptions.ErrorCode;
 import com.fyp.search_service.mapper.UserCdcMapper;
 import com.fyp.search_service.repository.UserSearchRepository;
+import com.fyp.search_service.search.ElasticSearchProxy;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -22,6 +29,7 @@ public class UserSearchService {
 
     UserSearchRepository userSearchRepository;
     UserCdcMapper userCdcMapper;
+    ElasticSearchProxy elasticSearchProxy;
 
    
     public void saveUser(Map<String, Object> userData){
@@ -53,10 +61,21 @@ public class UserSearchService {
 
             log.info("Successfully deleted user from Elasticsearch: userId={}", userId);
         } catch (Exception e){
-            // Reason: Repository delete failures indicate Elasticsearch deletion issues
             log.error("Error deleting user from Elasticsearch: userId={}", userId, e);
             throw new AppException(ErrorCode.ELASTICSEARCH_DELETE_ERROR);
         }
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    public PageResponse<UserResponse> searchUsers(UserSearchFilter filter) {
+        log.debug("Searching users with filter: {}", filter);
+        return elasticSearchProxy.searchUsers(filter);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<SearchSuggestion> getUserSuggestions(String term, int limit) {
+        log.debug("Getting user suggestions for term: {}, limit: {}", term, limit);
+        return elasticSearchProxy.getUserSuggestions(term, limit);
     }
 
 }

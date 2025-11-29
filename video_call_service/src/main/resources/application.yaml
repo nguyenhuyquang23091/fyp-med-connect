@@ -10,9 +10,7 @@ socket:
 
 service:
   internal:
-    # Authorization token for internal service calls (e.g., to notification-service)
-    # Should be set via environment variable: SERVICE_INTERNAL_AUTH_TOKEN
-    # Format: "Bearer <your-service-account-jwt-token>"
+
     auth-token: ${SERVICE_INTERNAL_AUTH_TOKEN}
 
 spring:

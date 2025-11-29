@@ -4,11 +4,10 @@ package com.fyp.appointment_service.service;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.UUID;
 
 import com.fyp.appointment_service.constant.AppointmentStatus;
 import com.fyp.appointment_service.constant.ConsultationType;
-import com.fyp.appointment_service.constant.PaymentMethod;
 import com.fyp.appointment_service.dto.request.AppointmentNotificationRequest;
 import com.fyp.appointment_service.dto.request.AppointmentUpdateRequest;
 import com.fyp.appointment_service.dto.request.PaymentRequest;
@@ -18,6 +17,7 @@ import com.fyp.appointment_service.exceptions.ErrorCode;
 import com.fyp.appointment_service.repository.httpCLient.NotificationFeignClient;
 import com.fyp.appointment_service.repository.httpCLient.ProfileClient;
 import com.fyp.appointment_service.repository.httpCLient.VnPayClient;
+import event.dto.AppointmentEvent;
 import event.dto.SessionVideoEvent;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -101,7 +101,7 @@ public class AppointmentService {
 
          AppointmentResponse appointmentResponse = handlePaymentMethod(appointmentEntity, price);
 
-        sendKafkaEvent(appointmentEntity);
+        publishAppointmentEvents(appointmentEntity);
 
         return  appointmentResponse;
 
@@ -134,13 +134,28 @@ public class AppointmentService {
             }
         }
 
-
         return  appointmentResponse;
     }
 
+    private void publishAppointmentEvents(AppointmentEntity appointmentEntity){
+
+        AppointmentEvent appointmentCreatedEvent = AppointmentEvent.builder()
+                .eventId(UUID.randomUUID().toString())
+                .appointmentId(appointmentEntity.getId())
+                .userId(appointmentEntity.getUserId())
+                .doctorId(appointmentEntity.getDoctorId())
+                .specialty(appointmentEntity.getSpecialty())
+                .consultationType(appointmentEntity.getConsultationType().name())
+                .appointmentStatus(appointmentEntity.getAppointmentStatus().name())
+                .price(appointmentEntity.getPrices())
+                .appointmentDateTime(appointmentEntity.getAppointmentDateTime().toString())
+                .createdAt(appointmentEntity.getCreatedDate().toString())
+                .build();
+
+        kafkaTemplate.send("appointment-created", appointmentCreatedEvent);
+        log.info("Published AppointmentCreatedEvent for appointment: {}", appointmentEntity.getId());
 
 
-    private void sendKafkaEvent( AppointmentEntity appointmentEntity){
         if (appointmentEntity.getConsultationType() == ConsultationType.VIDEO_CALL){
 
             SessionVideoEvent sessionVideoEvent =

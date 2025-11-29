@@ -41,6 +41,15 @@ rag-chat-bot/raft_state.json
 !.env.example
 !.env.template
 
+# Google Cloud credentials - CRITICAL: Never commit these!
+**/credentials/
+**/credential/
+credentials/
+credential/
+**/*.json
+!**/src/main/resources/static/*.json
+!**/package.json
+
 # Specific .env files in services
 appointment_service/src/main/resources/.env
 authservice/src/main/resources/.env
