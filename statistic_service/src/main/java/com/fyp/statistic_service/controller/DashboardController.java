@@ -1,16 +1,18 @@
 package com.fyp.statistic_service.controller;
 
 import com.fyp.statistic_service.dto.request.ApiResponse;
+import com.fyp.statistic_service.dto.response.DashboardStatisticsResponse;
 import com.fyp.statistic_service.service.AppointmentStatisticService;
+import com.fyp.statistic_service.service.DashboardService;
 import com.fyp.statistic_service.service.PaymentStatisticService;
 import com.fyp.statistic_service.service.UserStatisticService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,54 +24,31 @@ import java.util.Map;
 @Slf4j
 public class DashboardController {
 
+    DashboardService dashboardService;
     UserStatisticService userStatisticService;
     AppointmentStatisticService appointmentStatisticService;
     PaymentStatisticService paymentStatisticService;
 
 
+    /**
+     * Get comprehensive dashboard summary with metrics across all domains.
+     * Uses DashboardService to aggregate statistics from all services.
+     * 
+     * @return Dashboard statistics including user, appointment, and payment metrics
+     */
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/summary")
-    ApiResponse<Map<String, Object>> getDashboardSummary() {
+    ApiResponse<DashboardStatisticsResponse> getDashboardSummary() {
         log.info("Fetching dashboard summary");
 
-        LocalDate today = LocalDate.now();
-        LocalDate weekStart = today.minusDays(7);
-        LocalDate monthStart = today.minusDays(30);
+        DashboardStatisticsResponse summary = dashboardService.getDashboardSummaryInternal();
 
-        Map<String, Object> summary = new HashMap<>();
-
-        Map<String, Object> userMetrics = new HashMap<>();
-        userMetrics.put("totalUsers", userStatisticService.getLatestTotalUsers());
-        userMetrics.put("weeklyActiveUsers", userStatisticService.getWeeklyActiveUsers());
-        userMetrics.put("monthlyActiveUsers", userStatisticService.getMonthlyActiveUsers());
-        userMetrics.put("newUsersToday", userStatisticService.getNewUsersByDateRange(today, today));
-        userMetrics.put("newUsersThisWeek", userStatisticService.getNewUsersByDateRange(weekStart, today));
-        userMetrics.put("newUsersThisMonth", userStatisticService.getNewUsersByDateRange(monthStart, today));
-        summary.put("userMetrics", userMetrics);
-
-        Map<String, Object> appointmentMetrics = new HashMap<>();
-        appointmentMetrics.put("totalAppointmentsToday", appointmentStatisticService.getTotalAppointmentsByDateRange(today, today));
-        appointmentMetrics.put("totalAppointmentsThisWeek", appointmentStatisticService.getTotalAppointmentsByDateRange(weekStart, today));
-        appointmentMetrics.put("totalAppointmentsThisMonth", appointmentStatisticService.getTotalAppointmentsByDateRange(monthStart, today));
-        appointmentMetrics.put("completedThisWeek", appointmentStatisticService.getCompletedAppointmentsByDateRange(weekStart, today));
-        appointmentMetrics.put("cancelledThisWeek", appointmentStatisticService.getCancelledAppointmentsByDateRange(weekStart, today));
-        appointmentMetrics.put("pendingThisWeek", appointmentStatisticService.getPendingAppointmentsByDateRange(weekStart, today));
-        appointmentMetrics.put("avgCancellationRate", appointmentStatisticService.getAvgCancellationRate(weekStart, today));
-        summary.put("appointmentMetrics", appointmentMetrics);
-
-        Map<String, Object> paymentMetrics = new HashMap<>();
-        paymentMetrics.put("revenueToday", paymentStatisticService.getTotalRevenueByDateRange(today, today));
-        paymentMetrics.put("revenueThisWeek", paymentStatisticService.getTotalRevenueByDateRange(weekStart, today));
-        paymentMetrics.put("revenueThisMonth", paymentStatisticService.getTotalRevenueByDateRange(monthStart, today));
-        paymentMetrics.put("transactionsToday", paymentStatisticService.getTransactionCountByDateRange(today, today));
-        paymentMetrics.put("transactionsThisWeek", paymentStatisticService.getTransactionCountByDateRange(weekStart, today));
-        paymentMetrics.put("avgTransactionAmount", paymentStatisticService.getAvgTransactionAmount(weekStart, today));
-        summary.put("paymentMetrics", paymentMetrics);
-
-        return ApiResponse.<Map<String, Object>>builder()
+        return ApiResponse.<DashboardStatisticsResponse>builder()
                 .result(summary)
                 .build();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/today")
     ApiResponse<Map<String, Object>> getTodayMetrics() {
         log.info("Fetching today's metrics");
@@ -88,6 +67,7 @@ public class DashboardController {
     }
 
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/week")
     ApiResponse<Map<String, Object>> getWeekMetrics() {
         log.info("Fetching weekly metrics");
@@ -111,6 +91,7 @@ public class DashboardController {
     }
 
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/month")
     ApiResponse<Map<String, Object>> getMonthMetrics() {
         log.info("Fetching monthly metrics");
@@ -133,6 +114,7 @@ public class DashboardController {
     }
 
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/trends")
     ApiResponse<Map<String, Object>> getTrends() {
         log.info("Fetching trends data");

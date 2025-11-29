@@ -22,8 +22,6 @@ public class ChatBotConfig {
 
 
 
-
-
     @Bean
     ChatClient chatClient (ChatClient.Builder builder){
         return builder

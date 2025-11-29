@@ -52,6 +52,8 @@ logging:
     io:
       qdrant: DEBUG
     com.fyp.rag_chat_bot: DEBUG
+
+
 management:
   endpoints:
     web:

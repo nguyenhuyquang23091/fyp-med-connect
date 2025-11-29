@@ -84,5 +84,14 @@ scrape_configs:
         labels:
           application: 'Payment Service'
 
+  - job_name: 'statistic-service'
+    metrics_path: '/statistic/actuator/prometheus'
+    scrape_interval: 3s
+    static_configs:
+      - targets: [ 'host.docker.internal:8096' ]
+        labels:
+          application: 'Statistic Service'
+
+
 
 # remember to add configuration for other services too

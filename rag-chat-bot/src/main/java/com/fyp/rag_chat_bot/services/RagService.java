@@ -39,8 +39,10 @@ public class RagService {
     ProfileClient profileClient;
     JdbcChatMemoryRepository chatMemoryRepository;
 
-    public RagService(ChatClient chatClient, MessageChatMemoryAdvisor chatMemoryAdvisor
-            , ChatSessionService chatSessionService, QuestionAnswerAdvisor questionAnswerAdvisor,
+    public RagService(ChatClient chatClient,
+                      MessageChatMemoryAdvisor chatMemoryAdvisor
+            , ChatSessionService chatSessionService,
+                      QuestionAnswerAdvisor questionAnswerAdvisor,
                       ProfileClient profileClient,
                       JdbcChatMemoryRepository chatMemoryRepository){
         this.chatMemoryRepository = chatMemoryRepository;
@@ -122,6 +124,7 @@ public class RagService {
 
         // Get all messages from chat_memory table
         List<Message> allMessages = chatMemoryRepository.findByConversationId(conversationId);
+
         // Convert to 0-based indexing
         int start = (page - 1) * size;
 
